@@ -41,8 +41,8 @@ def prepare_training(fixtures_dir=DEFAULT_FIXTURES):
     folder = Path(fixtures_dir)
     train = read_csv(folder / filename for filename in TRAIN_FILES)
     validation = read_csv([folder / VALIDATION_FILE])
-    final = read_csv(folder / filename for filename in FINAL_FILES)
-    for rows in (train, validation, final):
+    # Never open or inspect the final test set during training.
+    for rows in (train, validation):
         for row in rows:
             if row["category"] not in VALID_CATEGORIES:
                 raise ValueError("Invalid category in frozen corpus")
@@ -51,13 +51,12 @@ def prepare_training(fixtures_dir=DEFAULT_FIXTURES):
     group = lambda row: row["source_file"].split("/")[2]
     train_groups = {group(row) for row in train}
     val_groups = {group(row) for row in validation}
-    final_groups = {group(row) for row in final}
-    if train_groups & val_groups or train_groups & final_groups or val_groups & final_groups:
+    if train_groups & val_groups:
         raise ValueError("Exporter-family leakage between dataset splits")
 
     # Remove *training* alert-name duplicates that appear in evaluation,
     # avoiding accidental memorization; NEVER edit test reference labels.
-    protected_names = {_split_identifier(row["alert_name"]) for row in validation + final}
+    protected_names = {_split_identifier(row["alert_name"]) for row in validation}
     train = [row for row in train if _split_identifier(row["alert_name"]) not in protected_names]
     seen = set()
     deduped = []
@@ -66,9 +65,9 @@ def prepare_training(fixtures_dir=DEFAULT_FIXTURES):
         if key not in seen:
             seen.add(key)
             deduped.append(row)
-    if len(deduped) < 300 or len(final) < 80:
+    if len(deduped) < 300 or len(validation) < 30:
         raise ValueError("Insufficient training or heldout examples")
-    return deduped, validation, final
+    return deduped, validation
 
 
 def feature_text(alert: dict) -> str:
@@ -120,7 +119,7 @@ def score_models(category_model, severity_model, rows):
 def train_and_save(fixtures_dir=DEFAULT_FIXTURES, model_path=DEFAULT_MODEL):
     """Choose hyperparameter solely on validation; final holdout not read for scoring."""
     from joblib import dump
-    train, val, _final = prepare_training(fixtures_dir)
+    train, val = prepare_training(fixtures_dir)
     X = [feature_text({"alert_name": row["alert_name"]}) for row in train]
     X_valid = [feature_text({"alert_name": row["alert_name"]}) for row in val]
     candidate_results = []
