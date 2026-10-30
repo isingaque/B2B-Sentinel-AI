@@ -17,6 +17,9 @@ jobs:
       - name: Evaluate trained model on validation exporters
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_ml_v14.py
+      - name: Evaluate ML once on untouched exporter-family holdout (diagnostic)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_ml_v14.py --final
       - name: Test local AI
         working-directory: backend
         run: pytest -q && PYTHONPATH=. python ../scripts/evaluate_ai.py
