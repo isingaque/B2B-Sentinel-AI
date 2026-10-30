@@ -63,6 +63,8 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-rules}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openrouter/free}
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_healthy}
