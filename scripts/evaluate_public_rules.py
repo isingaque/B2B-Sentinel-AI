@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from app.ai import classify
+from app.triage_v2 import classify_v2
 
 DATASET = Path(__file__).resolve().parents[1] / "backend" / "tests" / "fixtures" / "public_prometheus_rules.csv"
 EXPECTED_CATEGORIES = {"server", "network", "database", "application"}
@@ -18,7 +19,7 @@ EXPECTED_SEVERITIES = {"critical", "warning", "info"}
 PRIORITY_FOR_SEVERITY = {"critical": "P1", "warning": "P2", "info": "P4"}
 
 
-def evaluate(rows):
+def evaluate(rows, classifier=classify):
     totals = Counter()
     category_confusion = defaultdict(Counter)
     severity_confusion = defaultdict(Counter)
@@ -31,7 +32,7 @@ def evaluate(rows):
         if category not in EXPECTED_CATEGORIES or severity not in EXPECTED_SEVERITIES:
             raise ValueError("Unrecognized reference label: " + alert_name)
         # No category or severity labels: prevent target leakage.
-        prediction = classify({"alert_name": alert_name, "title": "", "description": "", "labels": {}})
+        prediction = classifier({"alert_name": alert_name, "title": "", "description": "", "labels": {}})
         category_ok = prediction["category"] == category
         severity_ok = prediction["severity"] == severity
         priority_ok = prediction["priority"] == PRIORITY_FOR_SEVERITY[severity]
@@ -75,12 +76,14 @@ def evaluate(rows):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--json-out", type=Path, help="Optional local report path")
+    parser.add_argument("--engine", choices=("legacy", "v2"), default="legacy")
     parser.add_argument("--dataset", type=Path, default=DATASET,
                         help="Override the CSV path (useful inside Docker)")
     args = parser.parse_args()
     with args.dataset.open(encoding="utf-8", newline="") as file:
         rows = list(csv.DictReader(file))
-    report = evaluate(rows)
+    report = evaluate(rows, classifier=classify_v2 if args.engine == "v2" else classify)
+    report["engine"] = args.engine
     report["dataset"] = str(args.dataset.name)
     print(f"Published rules: {report['sample_count']} (NOT observed incidents)")
     print("Input: alert name only; no source category or severity hints")
