@@ -121,24 +121,29 @@ def classify_with_deepseek(alert: dict) -> dict:
 
 
 def classify_incident(alert: dict) -> dict:
-    """Rules by default; opt-in DeepSeek, with fail-closed-to-rules behavior."""
-    if settings.ai_provider != "deepseek":
+    """Explicitly opt in to an external provider; otherwise use trusted local rules."""
+    provider = settings.ai_provider.strip().lower()
+    if provider not in ("deepseek", "openrouter"):
         return classify(alert)
     try:
+        if provider == "openrouter":
+            # Deferred import avoids circular imports with the shared validation logic.
+            from app.openrouter import classify_with_openrouter
+            return classify_with_openrouter(alert)
         return classify_with_deepseek(alert)
     except Exception as exc:
-        # Never log response bodies, prompts, Authorization headers or API keys.
+        # Do not log prompts, response bodies, credentials or request headers.
         if isinstance(exc, httpx.HTTPStatusError):
             reason = "HTTP " + str(exc.response.status_code)
         elif isinstance(exc, RuntimeError) and str(exc) == "missing_api_key":
             reason = "ключ не задан"
         else:
             reason = type(exc).__name__
-        log.warning("DeepSeek classification unavailable: %s; using local rules", reason)
+        log.warning("%s analysis unavailable: %s; using local rules", provider, reason)
         result = classify(alert)
         result["model_version"] = "expert-rules-v1+fallback"
         result["explanation"] = (
-            "DeepSeek недоступен (" + reason + "). Применены локальные правила. "
+            provider + " недоступен (" + reason + "). Применены локальные правила. "
             + result["explanation"]
         )
         return result
