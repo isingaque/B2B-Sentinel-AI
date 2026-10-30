@@ -34,6 +34,27 @@ SOURCE_FAMILIES = (
 
 # Domain terms can supplement ambiguous alert names and descriptions.
 # Evaluate longer, more specific indicators before generic words.
+# Monitoring target identity is useful when alert names are vendor-neutral.
+# These mappings are routing metadata, NOT independent ML predictions.
+# They intentionally cover common exporters and service families, but an
+# operator should override ambiguous providers in their Prometheus config.
+MONITORING_JOB_FAMILIES = (
+    ("server", re.compile(
+        r"\b(?:node[-_ ]?exporter|host|systemd|ipmi|smartctl|smart[-_ ]?exporter|"
+        r"hardware|machine|linux|windows[-_ ]?exporter)\b", re.I)),
+    ("network", re.compile(
+        r"\b(?:snmp|blackbox|cilium|juniper|coredns|core[-_ ]?dns|"
+        r"consul|ssl|tls|network|router|switch|netprobe|ping|dns)\b", re.I)),
+    ("database", re.compile(
+        r"\b(?:postgres|postgresql|pgbouncer|mysql|mariadb|redis|mongo|mongodb|"
+        r"cassandra|clickhouse|elastic|elasticsearch|sql|oracle|cockroach|"
+        r"influxdb|memcached|database)\b", re.I)),
+    ("application", re.compile(
+        r"\b(?:nginx|apache|php[-_ ]?fpm|php|python|golang|go[-_ ]?exporter|"
+        r"java|jvm|haproxy|caddy|envoy|rabbitmq|kafka|celery|"
+        r"web|api|frontend|backend|application)\b", re.I)),
+)
+
 INDICATORS = {
     "database": (
         "postgres", "mysql", "mariadb", "redis", "mongodb", "database", "sql",
@@ -103,16 +124,19 @@ def _category(name: str, text: str, labels: dict) -> tuple[str, str]:
     if explicit in CATEGORY_VALUES:
         return explicit, "Категория передана источником мониторинга"
 
-    # Source-based classification; a host's network anomaly is still
-    # categorized as server if it came from host/node exporter.
+    # Prometheus target/job identity (when available) is usually more
+    # reliable than an ambiguous vendor-neutral alert name.
+    source = " ".join(str(labels.get(x) or "") for x in
+                      ("job", "exporter", "service", "app", "component"))
+    for category, pattern in MONITORING_JOB_FAMILIES:
+        if pattern.search(source):
+            return category, "Категория по метке источника метрик: " + category
+
+    # Host exporter alerts belong to server category even when a named
+    # symptom refers to a network interface (this is category convention).
     for category, pattern in SOURCE_FAMILIES:
         if pattern.search(name):
             return category, "Категория по семейству мониторинга: " + category
-
-    source = " ".join(str(labels.get(x) or "") for x in ("job", "exporter", "service"))
-    for category, pattern in SOURCE_FAMILIES:
-        if pattern.search(source):
-            return category, "Категория по источнику метрик: " + category
 
     scores = {
         category: sum(1 for token in indicators if token in text)
