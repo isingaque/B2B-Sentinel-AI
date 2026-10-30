@@ -10,5 +10,9 @@ class Settings(BaseSettings):
     jwt_secret: str = "replace_with_at_least_32_random_characters_before_public_deploy"
     demo_password: str = "DemoPass123!"
     embedding_backend: str = "hash"
+    # Opt-in external analysis: keep "rules" for offline operation.
+    ai_provider: str = "rules"
+    deepseek_api_key: str = ""
+    deepseek_model: str = "deepseek-flash"
 
 settings = Settings()
