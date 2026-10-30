@@ -4,8 +4,11 @@ These are snapshots of published configurations, NOT real firing incidents.
 The benchmark is diagnostic; it does not demand an artificial 90% pass rate.
 """
 import csv
+import sys
 from pathlib import Path
 
+# The evaluation script lives in the repository root, not in backend/.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.evaluate_public_rules import evaluate
 
 FILE = Path(__file__).parent / "fixtures" / "public_prometheus_rules.csv"
