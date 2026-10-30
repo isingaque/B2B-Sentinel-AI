@@ -29,6 +29,12 @@ jobs:
       - name: Evaluate offline v2 on untouched-exporter holdout
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate source-assisted classification on other exporters
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --mode source --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate full Prometheus event metadata (severity passthrough)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --mode operational --dataset tests/fixtures/heldout_prometheus_rules.csv
       - name: Evaluate seed runbook retrieval (hash mode)
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_retrieval.py --backend hash
