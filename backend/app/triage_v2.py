@@ -130,7 +130,7 @@ def _category(name: str, text: str, labels: dict) -> tuple[str, str]:
                       ("job", "exporter", "service", "app", "component"))
     for category, pattern in MONITORING_JOB_FAMILIES:
         if pattern.search(source):
-            return category, "Категория по метке источника метрик: " + category
+            return category, "Категория по источнику метрик (метка job/exporter/service): " + category
 
     # Host exporter alerts belong to server category even when a named
     # symptom refers to a network interface (this is category convention).
