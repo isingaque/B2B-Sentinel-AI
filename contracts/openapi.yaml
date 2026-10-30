@@ -1,0 +1,1767 @@
+openapi: 3.1.0
+info:
+  title: Duty AI — B2B Incident Copilot API
+  version: 1.1.0
+  description: Contract-first spec. MVP uses Prometheus, human-only actions. All timestamps UTC RFC3339. Nulls
+    explicit.
+servers:
+- url: /
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+- name: Dashboard
+- name: Monitoring
+- name: Incidents
+- name: Recommendations
+- name: Runbooks
+- name: Demo
+- name: Health
+paths:
+  /health/live:
+    get:
+      tags:
+      - Health
+      operationId: healthLive
+      summary: Процесс работает
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      security: []
+  /health/ready:
+    get:
+      tags:
+      - Health
+      operationId: healthReady
+      summary: База и очередь доступны
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Dependency not ready
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Auth
+      operationId: authLogin
+      summary: Выдать JWT
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      security: []
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Auth
+      operationId: authMe
+      summary: Текущий пользователь
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/dashboard/summary:
+    get:
+      tags:
+      - Dashboard
+      operationId: getDashboardSummary
+      summary: Сводка текущих инцидентов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/monitoring/sources:
+    get:
+      tags:
+      - Monitoring
+      operationId: listMonitoringSources
+      summary: Состояния источников
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringSourceList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/monitoring/sources/{source_id}/sync:
+    post:
+      tags:
+      - Monitoring
+      operationId: syncMonitoringSource
+      summary: Принудительный опрос источника
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReceipt'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: source_id
+        required: true
+        schema: &id001
+          type: string
+          format: uuid
+      description: Admin only. Queues polling; no fake data insertion.
+  /api/v1/incidents:
+    get:
+      tags:
+      - Incidents
+      operationId: listIncidents
+      summary: Поиск и фильтрация инцидентов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - &id002
+        in: query
+        name: page
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - &id003
+        in: query
+        name: page_size
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - in: query
+        name: monitor_state
+        required: false
+        schema: &id009
+          type: string
+          enum:
+          - pending
+          - firing
+          - resolved
+      - in: query
+        name: workflow_status
+        required: false
+        schema: &id010
+          type: string
+          enum:
+          - open
+          - acknowledged
+          - closed
+      - in: query
+        name: severity
+        required: false
+        schema: &id011
+          type: string
+          enum:
+          - info
+          - warning
+          - critical
+      - in: query
+        name: category
+        required: false
+        schema: &id004
+          type: string
+          enum:
+          - server
+          - network
+          - database
+          - application
+      - in: query
+        name: priority
+        required: false
+        schema: &id012
+          type: string
+          enum:
+          - P1
+          - P2
+          - P3
+          - P4
+      - in: query
+        name: q
+        required: false
+        schema:
+          type: string
+          maxLength: 200
+      - in: query
+        name: hide_closed
+        required: false
+        description: Hide closed incidents from working list; no records are deleted.
+        schema:
+          type: boolean
+          default: false
+  /api/v1/incidents/{incident_id}:
+    get:
+      tags:
+      - Incidents
+      operationId: getIncident
+      summary: Детализация инцидента
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+  /api/v1/incidents/{incident_id}/timeline:
+    get:
+      tags:
+      - Incidents
+      operationId: getIncidentTimeline
+      summary: Журнал инцидента
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      - *id002
+      - *id003
+  /api/v1/incidents/{incident_id}/acknowledge:
+    post:
+      tags:
+      - Incidents
+      operationId: acknowledgeIncident
+      summary: Взять инцидент в работу
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      description: Idempotent for already acknowledged/closed; never calls infrastructure commands.
+  /api/v1/incidents/{incident_id}/close:
+    post:
+      tags:
+      - Incidents
+      operationId: closeIncident
+      summary: Закрыть после восстановления и всех чек-листов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseIncidentRequest'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      description: Requires acknowledged, monitor_state=resolved, no pending checklist items, non-empty resolution_note.
+  /api/v1/incidents/{incident_id}/analysis/retry:
+    post:
+      tags:
+      - Incidents
+      operationId: retryIncidentAnalysis
+      summary: Переотправить AI задачу
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReceipt'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      description: Admin only, creates a new attempt if there is no active analysis.
+  /api/v1/incidents/{incident_id}/recommendations:
+    get:
+      tags:
+      - Recommendations
+      operationId: listIncidentRecommendations
+      summary: Показать найденные регламенты
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+  /api/v1/incidents/{incident_id}/recommendations/{recommendation_id}/adopt:
+    post:
+      tags:
+      - Recommendations
+      operationId: adoptRecommendation
+      summary: Выбрать регламент и создать ручной чек-лист
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      - in: path
+        name: recommendation_id
+        required: true
+        schema: *id001
+      description: No automated execution; repeated adoption of same recommendation is idempotent.
+  /api/v1/incidents/{incident_id}/checklist/{item_id}:
+    patch:
+      tags:
+      - Recommendations
+      operationId: updateChecklistItem
+      summary: Подтвердить или пропустить ручной шаг
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistUpdateRequest'
+      parameters:
+      - in: path
+        name: incident_id
+        required: true
+        schema: *id001
+      - in: path
+        name: item_id
+        required: true
+        schema: *id001
+      description: status=skipped requires nonempty note. User action is audit-logged.
+  /api/v1/runbooks:
+    get:
+      tags:
+      - Runbooks
+      operationId: listRunbooks
+      summary: Реестр регламентов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunbookList'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - *id002
+      - *id003
+      - in: query
+        name: q
+        required: false
+        schema:
+          type: string
+          maxLength: 200
+      - in: query
+        name: category
+        required: false
+        schema: *id004
+      - in: query
+        name: is_active
+        required: false
+        schema:
+          type: boolean
+          default: true
+    post:
+      tags:
+      - Runbooks
+      operationId: createRunbook
+      summary: Добавить регламент
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runbook'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunbookCreateRequest'
+  /api/v1/runbooks/{runbook_id}:
+    get:
+      tags:
+      - Runbooks
+      operationId: getRunbook
+      summary: Получить регламент
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runbook'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: runbook_id
+        required: true
+        schema: *id001
+    patch:
+      tags:
+      - Runbooks
+      operationId: updateRunbook
+      summary: Заменить изменяемые данные регламента по версии
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runbook'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunbookUpdateRequest'
+      parameters:
+      - in: path
+        name: runbook_id
+        required: true
+        schema: *id001
+    delete:
+      tags:
+      - Runbooks
+      operationId: archiveRunbook
+      summary: Архивировать регламент
+      responses:
+        '204':
+          description: Archived, no response body
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: runbook_id
+        required: true
+        schema: *id001
+  /api/v1/runbooks/import:
+    post:
+      tags:
+      - Runbooks
+      operationId: importRunbooks
+      summary: Импортировать CSV UTF-8 <=1MB/100 строк атомарно
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+              - file
+      responses:
+        '201':
+          description: Imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunbookImportResult'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      description: 'Required headers: title,condition_text,action_text,category,severity. One row creates one
+        runbook with one step. Invalid row -> whole import rolled back.'
+  /api/v1/demo/scenarios/{scenario}/trigger:
+    post:
+      tags:
+      - Demo
+      operationId: triggerDemoScenario
+      summary: Вызвать демонстрационный алерт через exporter
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoReceipt'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - in: path
+        name: scenario
+        required: true
+        schema:
+          type: string
+          enum:
+          - high_cpu
+          - high_memory
+          - service_down
+      description: Only admin with DEMO_MODE=true; modifies demo exporter metrics, not incident records.
+  /api/v1/demo/reset:
+    post:
+      tags:
+      - Demo
+      operationId: resetDemoScenarios
+      summary: Сбросить демо-метрики
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoReceipt'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      description: Only DEMO_MODE=true; Prometheus detects the recovery.
+  /api/v1/runbooks/{runbook_id}/restore:
+    post:
+      tags:
+      - Runbooks
+      operationId: restoreRunbook
+      summary: Восстановить архивный регламент (admin)
+      parameters: &id006
+      - in: path
+        name: runbook_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Restored, new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runbook'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: &id005
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema: *id005
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema: *id005
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema: *id005
+  /api/v1/runbooks/{runbook_id}/purge:
+    delete:
+      tags:
+      - Runbooks
+      operationId: purgeRunbook
+      summary: Удалить навсегда неиспользуемый архивный регламент (admin)
+      parameters: *id006
+      responses:
+        '204':
+          description: Permanently deleted if archived and not referenced by recommendations
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: *id005
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema: *id005
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema: *id005
+        '409':
+          description: Active runbook or referenced by incident history
+          content:
+            application/problem+json:
+              schema: *id005
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+        detail:
+          type: string
+        request_id:
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - code
+      - detail
+      - request_id
+    User:
+      type: object
+      properties:
+        id: *id001
+        username:
+          type: string
+        role:
+          type: string
+          enum:
+          - admin
+          - operator
+      required:
+      - id
+      - username
+      - role
+    LoginRequest:
+      type: object
+      properties:
+        username: &id013
+          type: string
+          minLength: 1
+          maxLength: 200
+        password:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - username
+      - password
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum:
+          - bearer
+        expires_in:
+          type: integer
+          minimum: 1
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      - user
+    MonitoringSource:
+      type: object
+      properties:
+        id: *id001
+        name:
+          type: string
+        kind:
+          type: string
+          enum:
+          - prometheus
+        health:
+          type: string
+          enum:
+          - healthy
+          - stale
+          - unhealthy
+          - never_connected
+        last_polled_at:
+          anyOf:
+          - &id007
+            type: string
+            format: date-time
+          - type: 'null'
+        last_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+        enabled:
+          type: boolean
+      required:
+      - id
+      - name
+      - kind
+      - health
+      - last_polled_at
+      - last_error
+      - enabled
+    MonitoringSourceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitoringSource'
+      required:
+      - items
+    DashboardSummary:
+      type: object
+      properties:
+        open:
+          type: integer
+          minimum: 0
+        acknowledged:
+          type: integer
+          minimum: 0
+        closed:
+          type: integer
+          minimum: 0
+        critical_open:
+          type: integer
+          minimum: 0
+        analysis_pending:
+          type: integer
+          minimum: 0
+        source_connected:
+          type: boolean
+        updated_at: *id007
+      required:
+      - open
+      - acknowledged
+      - closed
+      - critical_open
+      - analysis_pending
+      - source_connected
+      - updated_at
+    Incident:
+      type: object
+      properties:
+        id: *id001
+        source_id: *id001
+        source_name:
+          type: string
+        alert_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        labels: &id008
+          type: object
+          additionalProperties:
+            type: string
+        annotations: *id008
+        monitor_state: *id009
+        workflow_status: *id010
+        severity:
+          anyOf:
+          - *id011
+          - type: 'null'
+        category:
+          anyOf:
+          - *id004
+          - type: 'null'
+        priority:
+          anyOf:
+          - *id012
+          - type: 'null'
+        started_at: *id007
+        last_seen_at: *id007
+        resolved_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        acknowledged_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        acknowledged_by:
+          anyOf:
+          - *id001
+          - type: 'null'
+        closed_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        closed_by:
+          anyOf:
+          - *id001
+          - type: 'null'
+        resolution_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - id
+      - source_id
+      - source_name
+      - alert_name
+      - title
+      - description
+      - labels
+      - annotations
+      - monitor_state
+      - workflow_status
+      - severity
+      - category
+      - priority
+      - started_at
+      - last_seen_at
+      - resolved_at
+      - acknowledged_at
+      - acknowledged_by
+      - closed_at
+      - closed_by
+      - resolution_note
+    IncidentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Incident'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total
+    Analysis:
+      type: object
+      properties:
+        id: *id001
+        status:
+          type: string
+          enum:
+          - pending
+          - running
+          - completed
+          - failed
+        severity:
+          anyOf:
+          - *id011
+          - type: 'null'
+        category:
+          anyOf:
+          - *id004
+          - type: 'null'
+        priority:
+          anyOf:
+          - *id012
+          - type: 'null'
+        confidence:
+          anyOf:
+          - type: number
+            minimum: 0
+            maximum: 1
+          - type: 'null'
+        review_required:
+          type: boolean
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+        model_version:
+          type: string
+        error_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at: *id007
+        completed_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+      required:
+      - id
+      - status
+      - severity
+      - category
+      - priority
+      - confidence
+      - review_required
+      - explanation
+      - model_version
+      - error_code
+      - created_at
+      - completed_at
+    RunbookStepCreate:
+      type: object
+      properties:
+        instruction: &id014
+          type: string
+          minLength: 1
+          maxLength: 5000
+        is_risky:
+          type: boolean
+          default: false
+      required:
+      - instruction
+    RunbookStep:
+      type: object
+      properties:
+        id: *id001
+        position:
+          type: integer
+          minimum: 1
+        instruction:
+          type: string
+        is_risky:
+          type: boolean
+      required:
+      - id
+      - position
+      - instruction
+      - is_risky
+    Runbook:
+      type: object
+      properties:
+        id: *id001
+        title:
+          type: string
+        condition_text:
+          type: string
+        category:
+          anyOf:
+          - *id004
+          - type: 'null'
+        severity:
+          anyOf:
+          - *id011
+          - type: 'null'
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunbookStep'
+        created_at: *id007
+        updated_at: *id007
+      required:
+      - id
+      - title
+      - condition_text
+      - category
+      - severity
+      - is_active
+      - version
+      - steps
+      - created_at
+      - updated_at
+    RunbookList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Runbook'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total
+    RunbookCreateRequest:
+      type: object
+      properties:
+        title: *id013
+        condition_text: *id014
+        category:
+          anyOf:
+          - *id004
+          - type: 'null'
+        severity:
+          anyOf:
+          - *id011
+          - type: 'null'
+        is_active:
+          type: boolean
+          default: true
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunbookStepCreate'
+          minItems: 1
+          maxItems: 30
+      required:
+      - title
+      - condition_text
+      - steps
+    RunbookUpdateRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        title: *id013
+        condition_text: *id014
+        category:
+          anyOf:
+          - *id004
+          - type: 'null'
+        severity:
+          anyOf:
+          - *id011
+          - type: 'null'
+        is_active:
+          type: boolean
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunbookStepCreate'
+          minItems: 1
+          maxItems: 30
+      required:
+      - version
+      - title
+      - condition_text
+      - category
+      - severity
+      - is_active
+      - steps
+    RunbookImportResult:
+      type: object
+      properties:
+        created_count:
+          type: integer
+          minimum: 0
+      required:
+      - created_count
+    RecommendationStep:
+      type: object
+      properties:
+        position:
+          type: integer
+          minimum: 1
+        instruction:
+          type: string
+        is_risky:
+          type: boolean
+      required:
+      - position
+      - instruction
+      - is_risky
+    Recommendation:
+      type: object
+      properties:
+        id: *id001
+        incident_id: *id001
+        runbook_id: *id001
+        runbook_version:
+          type: integer
+          minimum: 1
+        runbook_title:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        reason:
+          type: string
+        steps_snapshot:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationStep'
+        is_adopted:
+          type: boolean
+        created_at: *id007
+      required:
+      - id
+      - incident_id
+      - runbook_id
+      - runbook_version
+      - runbook_title
+      - score
+      - reason
+      - steps_snapshot
+      - is_adopted
+      - created_at
+    RecommendationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+      required:
+      - items
+    ChecklistItem:
+      type: object
+      properties:
+        id: *id001
+        incident_id: *id001
+        recommendation_id: *id001
+        position:
+          type: integer
+          minimum: 1
+        instruction:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - done
+          - skipped
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+        updated_by:
+          anyOf:
+          - *id001
+          - type: 'null'
+        updated_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+      required:
+      - id
+      - incident_id
+      - recommendation_id
+      - position
+      - instruction
+      - status
+      - note
+      - updated_by
+      - updated_at
+    ChecklistList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+      required:
+      - items
+    IncidentDetail:
+      allOf:
+      - $ref: '#/components/schemas/Incident'
+      - type: object
+        properties:
+          latest_analysis:
+            anyOf:
+            - $ref: '#/components/schemas/Analysis'
+            - type: 'null'
+          adopted_recommendation_id:
+            anyOf:
+            - *id001
+            - type: 'null'
+          checklist:
+            type: array
+            items:
+              $ref: '#/components/schemas/ChecklistItem'
+        required:
+        - latest_analysis
+        - adopted_recommendation_id
+        - checklist
+    ChecklistUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - done
+          - skipped
+        note:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+      required:
+      - status
+    CloseIncidentRequest:
+      type: object
+      properties:
+        resolution_note:
+          type: string
+          minLength: 3
+          maxLength: 2000
+      required:
+      - resolution_note
+    AuditEvent:
+      type: object
+      properties:
+        id: *id001
+        incident_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        actor_username:
+          anyOf:
+          - type: string
+          - type: 'null'
+        action:
+          type: string
+        entity_kind:
+          type: string
+        entity_id: *id001
+        before:
+          anyOf:
+          - &id015
+            type: object
+            additionalProperties: true
+          - type: 'null'
+        after:
+          anyOf:
+          - *id015
+          - type: 'null'
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at: *id007
+      required:
+      - id
+      - incident_id
+      - actor_username
+      - action
+      - entity_kind
+      - entity_id
+      - before
+      - after
+      - request_id
+      - created_at
+    AuditList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total
+    JobReceipt:
+      type: object
+      properties:
+        job_id: *id001
+        status:
+          type: string
+          enum:
+          - queued
+      required:
+      - job_id
+      - status
+    DemoReceipt:
+      type: object
+      properties:
+        scenario:
+          type: string
+          enum:
+          - high_cpu
+          - high_memory
+          - service_down
+          - reset
+        status:
+          type: string
+          enum:
+          - queued
+      required:
+      - scenario
+      - status
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+      required:
+      - status

@@ -1,0 +1,58 @@
+"""Additional manually written synthetic alerts not used in original 24-case baseline.
+Not production data and not an independent dataset supplied by a third party.
+Each item = alert_name, description, expected category, expected severity.
+"""
+HOLDOUT = [
+ # server (12)
+ ("NodeCpuSaturation", "processor CPU usage reached 98% on node", "server", "critical"),
+ ("FilesystemPressure", "filesystem has high disk usage 90%", "server", "warning"),
+ ("MemoryWarning", "server RAM usage high in cluster", "server", "warning"),
+ ("HostOffline", "server unavailable; host not responding", "server", "critical"),
+ ("DiskUtilization", "disk volume usage high 90%", "server", "warning"),
+ ("CPUThreshold", "warning cpu load above threshold", "server", "warning"),
+ ("LowInodes", "server filesystem inode usage high", "server", "warning"),
+ ("ServerHighLoad", "server processor load 95% critical", "server", "critical"),
+ ("MemoryCritical", "server memory critical high usage 95%", "server", "critical"),
+ ("StorageFull", "disk storage is full and unavailable", "server", "critical"),
+ ("RamWarning", "сервер: высокая загрузка памяти, предупреждение", "server", "warning"),
+ ("ProcessorOverload", "процессор сервера критически перегружен, 95%", "server", "critical"),
+ # network (12)
+ ("GatewayUnreachable", "network gateway not responding", "network", "critical"),
+ ("DnsResolutionDown", "DNS network resolver unavailable", "network", "critical"),
+ ("NetworkLatency", "network interface high latency 90%", "network", "warning"),
+ ("LossOfPackets", "router packet loss high warning", "network", "warning"),
+ ("NetworkLinkDown", "network interface down", "network", "critical"),
+ ("RouterInaccessible", "router gateway unavailable", "network", "critical"),
+ ("HighNetworkDelay", "сетевой интерфейс: высокая задержка пакетов", "network", "warning"),
+ ("NetworkThreshold", "packet loss warning threshold exceeded", "network", "warning"),
+ ("InternetFail", "network gateway connection refused", "network", "critical"),
+ ("NetworkPackets", "network packet loss 90%", "network", "warning"),
+ ("LinkLatency", "network router latency increased high", "network", "warning"),
+ ("DnsWarn", "DNS latency warning for network service", "network", "warning"),
+ # database (12)
+ ("DbServiceUnavailable", "postgres database service unavailable", "database", "critical"),
+ ("SlowSqlQueries", "database SQL queries slow and high latency", "database", "warning"),
+ ("MysqlRefused", "mysql database connection refused", "database", "critical"),
+ ("DBReplicaLag", "postgres replication lag high warning", "database", "warning"),
+ ("SqlFailure", "SQL database down", "database", "critical"),
+ ("DatabaseWarn", "database warning: high query latency", "database", "warning"),
+ ("PgOffline", "postgres сервер БД недоступен", "database", "critical"),
+ ("PgConnectionFail", "postgres connection refused", "database", "critical"),
+ ("DbSlow", "mysql database slow queries", "database", "warning"),
+ ("ReplicaWarning", "postgres replica high replication lag warning", "database", "warning"),
+ ("DatabaseStorage", "database query latency high warning", "database", "warning"),
+ ("SQLConnectivity", "database connection refused, service not responding", "database", "critical"),
+ # application (12)
+ ("WebGatewayError", "nginx application proxy returns HTTP 502", "application", "critical"),
+ ("ApiUnavailable", "backend API service down", "application", "critical"),
+ ("FrontendHighLatency", "frontend HTTP response time high", "application", "warning"),
+ ("AppException", "application exception rate increased, info", "application", "info"),
+ ("HttpBadGateway", "web app HTTP 502 unavailable", "application", "critical"),
+ ("NginxWarning", "nginx service slow response warning", "application", "warning"),
+ ("ApiServerError", "API HTTP 503 service unavailable", "application", "critical"),
+ ("ServiceSlow", "backend service high latency", "application", "warning"),
+ ("FrontendException", "frontend application exception info", "application", "info"),
+ ("AppWarning", "application response time warning threshold", "application", "warning"),
+ ("WebAppFailed", "nginx web application not responding", "application", "critical"),
+ ("HttpInfo", "application info: expected HTTP requests", "application", "info"),
+]

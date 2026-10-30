@@ -1,0 +1,2 @@
+# Optional: pip install -r requirements-ai-optional.txt; set EMBEDDING_BACKEND=e5
+sentence-transformers>=3.4,<6

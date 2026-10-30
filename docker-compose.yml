@@ -1,0 +1,99 @@
+name: sentinel_ai
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: dutyai
+      POSTGRES_USER: dutyai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_development_only}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dutyai -d dutyai"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  exporter:
+    build: ./exporter
+    environment:
+      DEMO_TOKEN: ${DEMO_TOKEN:-change_me_shared_demo_secret}
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - exporter
+    restart: unless-stopped
+  api:
+    build: &backend_build
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        INSTALL_E5: ${INSTALL_E5:-0}
+    command: sh -c 'python -m app.bootstrap && uvicorn app.main:app --host 0.0.0.0 --port 8000'
+    environment: &app_env
+      DATABASE_URL: postgresql+psycopg://dutyai:${POSTGRES_PASSWORD:-local_development_only}@db:5432/dutyai
+      REDIS_URL: redis://redis:6379/0
+      PROMETHEUS_URL: http://prometheus:9090
+      DEMO_EXPORTER_URL: http://exporter:9102
+      DEMO_TOKEN: ${DEMO_TOKEN:-change_me_shared_demo_secret}
+      JWT_SECRET: ${JWT_SECRET:-replace_with_at_least_32_random_characters_before_public_deploy}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-DemoPass123!}
+      EMBEDDING_BACKEND: ${EMBEDDING_BACKEND:-hash}
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      prometheus: {condition: service_started}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  worker:
+    build: *backend_build
+    command: sh -c 'python -m app.bootstrap && celery -A app.tasks.celery worker --loglevel=INFO --concurrency=2'
+    environment: *app_env
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      api: {condition: service_healthy}
+    restart: unless-stopped
+  scheduler:
+    build: *backend_build
+    command: celery -A app.tasks.celery beat --loglevel=INFO
+    environment: *app_env
+    depends_on:
+      worker: {condition: service_started}
+    restart: unless-stopped
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:

@@ -1,0 +1,53 @@
+groups:
+  - name: dutyai_demo
+    rules:
+      - alert: HighCPUUsage
+        expr: demo_incident_active{scenario="cpu_high"} == 1
+        for: 0s
+        labels:
+          severity: critical
+          category: server
+          service: compute
+        annotations:
+          summary: "Высокая загрузка CPU на сервере"
+          description: "CPU utilization exceeded 95% for server node-01; inspect processes and load."
+      - alert: LowDiskSpace
+        expr: demo_incident_active{scenario="disk_full"} == 1
+        for: 0s
+        labels:
+          severity: warning
+          category: server
+          service: storage
+        annotations:
+          summary: "Мало места на диске"
+          description: "Disk /var reached more than 90% usage; investigate logs and large files."
+      - alert: PostgreSQLDown
+        expr: demo_incident_active{scenario="database_down"} == 1
+        for: 0s
+        labels:
+          severity: critical
+          category: database
+          service: postgres
+        annotations:
+          summary: "PostgreSQL недоступен"
+          description: "Database connection refused or database service unavailable; check health and connectivity."
+      - alert: NginxDown
+        expr: demo_incident_active{scenario="nginx_down"} == 1
+        for: 0s
+        labels:
+          severity: critical
+          category: application
+          service: nginx
+        annotations:
+          summary: "Nginx не отвечает"
+          description: "HTTP 502 or nginx service unavailable; check logs, upstream and service state."
+      - alert: NetworkPacketLoss
+        expr: demo_incident_active{scenario="packet_loss"} == 1
+        for: 0s
+        labels:
+          severity: warning
+          category: network
+          service: network
+        annotations:
+          summary: "Высокие потери пакетов"
+          description: "Packet loss over 15 percent; inspect network interface and link health."
