@@ -3,16 +3,18 @@
 Command: docker compose exec api python /srv/evaluate_ai.py
 """
 import json
+import argparse
 from collections import Counter
 from app.ai import classify
+from app.triage_v2 import classify_v2
 from tests.test_ai import DATA
 from tests.holdout_cases import HOLDOUT
 
-def evaluate(data, name):
+def evaluate(data, name, classifier=classify):
     correct_category=correct_severity=joint=0
     errors=[]
     for alert_name,description,category,severity in data:
-        result=classify({"alert_name":alert_name,"description":description,"labels":{}})
+        result=classifier({"alert_name":alert_name,"description":description,"labels":{}})
         good_category=result['category']==category
         good_severity=result['severity']==severity
         correct_category+=good_category
@@ -28,10 +30,19 @@ def evaluate(data, name):
     return results
 
 def main():
-    a=evaluate(DATA,'Original synthetic benchmark')
-    b=evaluate(HOLDOUT,'Additional manually written synthetic holdout')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--engine', choices=('legacy', 'v2'), default='legacy')
+    parser.add_argument('--no-gate', action='store_true', help='Report only; do not enforce synthetic score')
+    args = parser.parse_args()
+    classifier = classify_v2 if args.engine == 'v2' else classify
+    print('Classifier engine:', args.engine)
+    a=evaluate(DATA,'Original synthetic benchmark',classifier)
+    b=evaluate(HOLDOUT,'Additional manually written synthetic holdout',classifier)
     print('Result (JSON):',json.dumps({"original":a,"additional":b},ensure_ascii=False))
     print('NOTE: these are manually authored synthetic samples; do not report them as external independent validation.')
+    if args.no_gate:
+        print('REPORT ONLY: no acceptance threshold was enforced')
+        return
     if a['joint_accuracy']<.90 or b['joint_accuracy']<.90:
         raise SystemExit('FAILED: joint accuracy below 90% on one synthetic split')
     print('PASS: both synthetic evaluation splits >=90%')
