@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from app.ai import classify
+from app.triage_v2 import classify_v2
 
 CATEGORIES = {"server", "network", "database", "application"}
 SEVERITIES = {"critical", "warning", "info"}
@@ -21,7 +22,7 @@ LEAKAGE_LABELS = {"category", "severity", "priority", "incident_category",
                   "incident_severity", "predicted_category", "predicted_severity"}
 
 
-def score_rows(rows, use_source_severity=False):
+def score_rows(rows, use_source_severity=False, classifier=classify):
     score = Counter()
     category_confusion = defaultdict(Counter)
     severity_confusion = defaultdict(Counter)
@@ -52,7 +53,7 @@ def score_rows(rows, use_source_severity=False):
             "description": row["description"],
             "labels": labels,
         }
-        prediction = classify(alert)
+        prediction = classifier(alert)
         results = {
             "category": prediction["category"] == expected_category,
             "severity": prediction["severity"] == expected_severity,
@@ -89,6 +90,7 @@ def score_rows(rows, use_source_severity=False):
 def main():
     parser = argparse.ArgumentParser(description="Evaluate labeled incident CSV")
     parser.add_argument("--csv", required=True, type=Path)
+    parser.add_argument("--engine", choices=("legacy", "v2"), default="legacy")
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--include-source-severity", action="store_true",
                         help="Operational mode, NOT an independent severity test")
@@ -96,7 +98,8 @@ def main():
                         help="Exit nonzero unless >=100 cases and >=90% exact joint accuracy")
     args = parser.parse_args()
     with args.csv.open(encoding="utf-8-sig", newline="") as handle:
-        report = score_rows(csv.DictReader(handle), args.include_source_severity)
+        report = score_rows(csv.DictReader(handle), args.include_source_severity,
+                            classifier=classify_v2 if args.engine == "v2" else classify)
     for key in ("category_accuracy", "severity_accuracy", "priority_accuracy", "joint_accuracy"):
         print(f"{key}: {report[key]:.1%}")
     print("Cases:", report["count"], "| Mode:", report["mode"])
