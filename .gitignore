@@ -1,0 +1,15 @@
+.env
+*.dump
+*.sql.gz
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+.vite/
+*.log
+.DS_Store
+.idea/
+.vscode/
+coverage/
