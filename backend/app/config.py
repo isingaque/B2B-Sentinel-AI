@@ -14,5 +14,7 @@ class Settings(BaseSettings):
     ai_provider: str = "rules"
     deepseek_api_key: str = ""
     deepseek_model: str = "deepseek-flash"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openrouter/free"
 
 settings = Settings()
