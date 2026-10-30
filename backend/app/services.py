@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.ai import classify, embed, pick_runbooks
 from app.triage_v2 import classify_v2
+from app.ml_v14 import classify_ml
 from app.config import settings
 from app.models import Incident, MonitoringSource, Analysis, Recommendation, AuditEvent, Runbook, utcnow
 
@@ -85,7 +86,8 @@ def perform_analysis(db: Session, incident_id: str, analysis_id: str):
     try:
         alert = dict(labels=incident.labels, alert_name=incident.alert_name,
                      title=incident.title, description=incident.description)
-        result = classify_v2(alert) if settings.classifier_engine == "v2" else classify(alert)
+        result = (classify_ml(alert) if settings.classifier_engine == "ml" else
+                  classify_v2(alert) if settings.classifier_engine == "v2" else classify(alert))
         runbooks = db.scalars(select(Runbook).where(Runbook.is_active.is_(True))).all()
         candidates = pick_runbooks(alert, result, runbooks)
         # Remove old suggestions only when no plan has been adopted; chosen plan is immutable.
