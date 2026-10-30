@@ -5,7 +5,8 @@ import json
 import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.ai import classify, embed, pick_runbooks
+from app.ai import embed, pick_runbooks
+from app.llm import classify_incident
 from app.models import Incident, MonitoringSource, Analysis, Recommendation, AuditEvent, Runbook, utcnow
 
 log = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ def perform_analysis(db: Session, incident_id: str, analysis_id: str):
     try:
         alert = dict(labels=incident.labels, alert_name=incident.alert_name,
                      title=incident.title, description=incident.description)
-        result = classify(alert)
+        result = classify_incident(alert)
         runbooks = db.scalars(select(Runbook).where(Runbook.is_active.is_(True))).all()
         candidates = pick_runbooks(alert, result, runbooks)
         # Remove old suggestions only when no plan has been adopted; chosen plan is immutable.
