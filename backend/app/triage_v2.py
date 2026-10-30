@@ -144,9 +144,9 @@ def _severity(name: str, text: str, labels: dict) -> tuple[str, str]:
         return "info", "Информационный тип события"
     # A generic exception-count notice without a threshold does not prove
     # an outage. Preserve the legacy informational synthetic scenario.
-    if (re.search(r"\\bexception\\b", text) and
-            re.search(r"\\berrors?\\s+increased\\b", text) and
-            not re.search(r"\\b(?:critical|high|threshold)\\b|\\d+\\s*%", text)):
+    if (re.search(r"\bexception\b", text) and
+            re.search(r"\berrors?\s+increased\b", text) and
+            not re.search(r"\b(?:critical|high|threshold)\b|\d+\s*%", text)):
         return "info", "Рост ошибок без указанного порога: требуется проверка"
     if re.search(SEVERITY_CRITICAL, text):
         return "critical", "Признаки критического сбоя в содержании"
