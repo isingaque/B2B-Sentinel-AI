@@ -31,7 +31,7 @@ def test_job_metadata_routes_generic_alert(job, expected):
     assert result["category"] == expected
     assert result["confidence"] is None
     assert result["review_required"]
-    assert "источника метрик" in result["explanation"]
+    assert "по источнику метрик" in result["explanation"]
 
 
 def test_severity_label_is_used_but_not_presented_as_ai_inference():
