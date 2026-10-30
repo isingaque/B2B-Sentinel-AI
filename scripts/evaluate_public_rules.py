@@ -75,10 +75,13 @@ def evaluate(rows):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--json-out", type=Path, help="Optional local report path")
+    parser.add_argument("--dataset", type=Path, default=DATASET,
+                        help="Override the CSV path (useful inside Docker)")
     args = parser.parse_args()
-    with DATASET.open(encoding="utf-8", newline="") as file:
+    with args.dataset.open(encoding="utf-8", newline="") as file:
         rows = list(csv.DictReader(file))
     report = evaluate(rows)
+    report["dataset"] = str(args.dataset.name)
     print(f"Published rules: {report['sample_count']} (NOT observed incidents)")
     print("Input: alert name only; no source category or severity hints")
     for metric in ("category_accuracy", "severity_accuracy", "priority_accuracy", "joint_accuracy"):
