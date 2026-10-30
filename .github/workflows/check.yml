@@ -11,6 +11,12 @@ jobs:
         with: {python-version: '3.12'}
       - name: Install dependencies
         run: pip install -r backend/requirements-dev.txt
+      - name: Train local supervised ML model (train+validation only)
+        working-directory: backend
+        run: PYTHONPATH=. python -m app.ml_v14 --train
+      - name: Evaluate trained model on validation exporters
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_ml_v14.py
       - name: Test local AI
         working-directory: backend
         run: pytest -q && PYTHONPATH=. python ../scripts/evaluate_ai.py
