@@ -14,6 +14,12 @@ jobs:
       - name: Test local AI
         working-directory: backend
         run: pytest -q && PYTHONPATH=. python ../scripts/evaluate_ai.py
+      - name: Evaluate published Prometheus rules (diagnostic, not an acceptance gate)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py
+      - name: Evaluate seed runbook retrieval (hash mode)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_retrieval.py --backend hash
   frontend:
     runs-on: ubuntu-latest
     steps:
