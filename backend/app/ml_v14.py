@@ -134,6 +134,28 @@ def train_and_save(fixtures_dir=DEFAULT_FIXTURES, model_path=DEFAULT_MODEL):
     # Prefer simpler regularization at same validation exact-match accuracy.
     best = sorted(candidate_results, key=lambda x: (-x[0], x[1]))[0]
     _, c, category_model, severity_model, metrics = best
+    # A hybrid is selected ONLY on the validation exporters. The final
+    # holdout CSV is never opened until after the strategy is frozen.
+    ml_categories = category_model.predict(X_valid)
+    ml_severities = severity_model.predict(X_valid)
+    rule_predictions = [
+        classify_v2({"alert_name": row["alert_name"], "labels": {}})
+        for row in val
+    ]
+    strategy_scores = {}
+    for strategy in ("ml_both", "rules_category_ml_severity",
+                     "ml_category_rules_severity", "rules_both"):
+        correct = 0
+        for i, row in enumerate(val):
+            category = (rule_predictions[i]["category"] if strategy in
+                        ("rules_category_ml_severity", "rules_both")
+                        else str(ml_categories[i]))
+            severity = (rule_predictions[i]["severity"] if strategy in
+                        ("ml_category_rules_severity", "rules_both")
+                        else str(ml_severities[i]))
+            correct += category == row["category"] and severity == row["severity"]
+        strategy_scores[strategy] = round(correct / len(val), 4)
+    strategy = max(strategy_scores, key=strategy_scores.get)
     payload = {
         "version": "supervised-tfidf-svm-v14",
         "category": category_model,
@@ -142,6 +164,8 @@ def train_and_save(fixtures_dir=DEFAULT_FIXTURES, model_path=DEFAULT_MODEL):
         "validation_count": len(val),
         "selected_c": c,
         "validation_metrics": metrics,
+        "selected_strategy": strategy,
+        "strategy_validation_joint": strategy_scores,
     }
     path = Path(model_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -183,18 +207,25 @@ def classify_learned(alert: dict, model=None):
 def classify_ml(alert: dict, model=None):
     """Operational hybrid: prefer authoritative source labels when present."""
     v2 = classify_v2(alert)
+    model = model if model is not None else load_model()
     predicted = classify_learned(
         {**alert, "labels": {}}, model=model)
     labels = {str(k).lower(): str(v).lower() for k, v in
               (alert.get("labels") or {}).items()}
-    # Source identifiers and explicitly declared categories carry routing
-    # context. When missing, the trained classifier uses alert text.
-    has_source = any(str(labels.get(k) or "").strip()
-                     for k in ("category", "job", "exporter", "service", "app", "component"))
-    category = v2["category"] if has_source else predicted["category"]
-    # Severity from source is not an AI prediction; preserve provenance.
+    from app.triage_v2 import MONITORING_JOB_FAMILIES
+    source = " ".join(labels.get(k, "") for k in
+                      ("job", "exporter", "service", "app", "component"))
+    has_source = (labels.get("category") in VALID_CATEGORIES or
+                  any(pattern.search(source) for _, pattern in MONITORING_JOB_FAMILIES))
+    strategy = model["selected_strategy"]
+    # Validation-selected hybrid; NOT tuned against final holdout.
+    category = (v2["category"] if has_source or strategy in
+                ("rules_category_ml_severity", "rules_both")
+                else predicted["category"])
     from_source = labels.get("severity") in VALID_SEVERITIES
-    severity = v2["severity"] if from_source else predicted["severity"]
+    severity = (v2["severity"] if from_source or strategy in
+                ("ml_category_rules_severity", "rules_both")
+                else predicted["severity"])
     return {
         "category": category,
         "severity": severity,
@@ -227,6 +258,8 @@ def main():
         "validation_count": model["validation_count"],
         "selected_c": model["selected_c"],
         "validation_metrics": model["validation_metrics"],
+        "selected_strategy": model["selected_strategy"],
+        "strategy_validation_joint": model["strategy_validation_joint"],
     }, ensure_ascii=False))
 
 
