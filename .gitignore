@@ -13,3 +13,6 @@ dist/
 .idea/
 .vscode/
 coverage/
+
+# Reproducible offline supervised ML model generated at build time.
+*.joblib
