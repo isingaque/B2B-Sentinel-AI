@@ -23,6 +23,10 @@ def test_model_is_locally_trained_and_valid():
     model = load_model()
     assert model["train_count"] >= 300
     assert model["version"] == "supervised-tfidf-svm-v14"
+    assert model["selected_strategy"] in (
+        "ml_both", "rules_category_ml_severity",
+        "ml_category_rules_severity", "rules_both"
+    )
     assert 0.0 <= model["validation_metrics"]["joint_accuracy"] <= 1.0
     classification = classify_learned({
         "alert_name": "PostgresqlDown", "title": "", "description": ""
