@@ -11,7 +11,7 @@ from pathlib import Path
 from app.ai import classify
 from app.ml_v14 import (
     DEFAULT_FIXTURES, DEFAULT_MODEL, FINAL_FILES, TRAIN_FILES, VALIDATION_FILE,
-    feature_text, read_csv, prepare_training, classify_learned,
+    feature_text, read_csv, prepare_training, classify_learned, classify_ml,
 )
 from app.triage_v2 import classify_v2
 
@@ -26,6 +26,7 @@ def evaluate(name, rows, model, training_names):
         ("legacy_rules", classify),
         ("offline_rules_v2", classify_v2),
         ("supervised_ml_v14", lambda alert: classify_learned(alert, model=model)),
+        ("validation_selected_hybrid", lambda alert: classify_ml(alert, model=model)),
     ):
         c = s = joint = 0
         errors = []
