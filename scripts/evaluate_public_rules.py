@@ -19,7 +19,14 @@ EXPECTED_SEVERITIES = {"critical", "warning", "info"}
 PRIORITY_FOR_SEVERITY = {"critical": "P1", "warning": "P2", "info": "P4"}
 
 
-def evaluate(rows, classifier=classify):
+def evaluate(rows, classifier=classify, mode="blind"):
+    """blind: name only; source: adds simulated monitoring job; operational:
+    adds job and the configured Prometheus severity label.
+    Never supplies a category label. This tests metadata routing, NOT
+    independent prediction of severity in operational mode.
+    """
+    if mode not in ("blind", "source", "operational"):
+        raise ValueError("unknown evaluation mode")
     totals = Counter()
     category_confusion = defaultdict(Counter)
     severity_confusion = defaultdict(Counter)
@@ -31,8 +38,20 @@ def evaluate(rows, classifier=classify):
         severity = row["severity"]
         if category not in EXPECTED_CATEGORIES or severity not in EXPECTED_SEVERITIES:
             raise ValueError("Unrecognized reference label: " + alert_name)
-        # No category or severity labels: prevent target leakage.
-        prediction = classifier({"alert_name": alert_name, "title": "", "description": "", "labels": {}})
+        labels = {}
+        if mode in ("source", "operational"):
+            # Proxy job derived from public rule's exporter folder and file.
+            # This is NOT a captured production job label.
+            src = row["source_file"].rsplit("/", 2)
+            labels["job"] = " ".join(src[-2:])
+        if mode == "operational":
+            # In production Prometheus usually already knows the severity
+            # configured in the alert rule. Explicit passthrough, not inference.
+            labels["severity"] = severity
+        assert "category" not in labels
+        prediction = classifier({
+            "alert_name": alert_name, "title": "", "description": "", "labels": labels
+        })
         category_ok = prediction["category"] == category
         severity_ok = prediction["severity"] == severity
         priority_ok = prediction["priority"] == PRIORITY_FOR_SEVERITY[severity]
@@ -60,7 +79,10 @@ def evaluate(rows, classifier=classify):
     return {
         "dataset": str(DATASET.name),
         "dataset_kind": "published_alert_rules_not_firing_incidents",
-        "inputs": "alert_name_only_no_labels_or_descriptions",
+        "inputs": {"blind": "alert_name_only", "source": "alert_name+proxy_job",
+                   "operational": "alert_name+proxy_job+configured_severity"}[mode],
+        "evaluation_mode": mode,
+        "severity_inferred_independently": mode != "operational",
         "sample_count": n,
         "category_accuracy": round(totals["category_correct"] / n, 4),
         "severity_accuracy": round(totals["severity_correct"] / n, 4),
@@ -77,16 +99,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--json-out", type=Path, help="Optional local report path")
     parser.add_argument("--engine", choices=("legacy", "v2"), default="legacy")
+    parser.add_argument("--mode", choices=("blind", "source", "operational"), default="blind")
     parser.add_argument("--dataset", type=Path, default=DATASET,
                         help="Override the CSV path (useful inside Docker)")
     args = parser.parse_args()
     with args.dataset.open(encoding="utf-8", newline="") as file:
         rows = list(csv.DictReader(file))
-    report = evaluate(rows, classifier=classify_v2 if args.engine == "v2" else classify)
+    report = evaluate(rows, classifier=classify_v2 if args.engine == "v2" else classify,
+                      mode=args.mode)
     report["engine"] = args.engine
     report["dataset"] = str(args.dataset.name)
     print(f"Published rules: {report['sample_count']} (NOT observed incidents)")
-    print("Input: alert name only; no source category or severity hints")
+    print("Input mode:", args.mode)
+    if args.mode == "operational":
+        print("IMPORTANT: configured severity is an input label, NOT predicted independently.")
+    if args.mode in ("source", "operational"):
+        print("IMPORTANT: monitoring job is approximated from the public exporter path.")
     for metric in ("category_accuracy", "severity_accuracy", "priority_accuracy", "joint_accuracy"):
         print(f"{metric}: {report[metric]:.1%}")
     print(f"Mismatches: {len(report['errors'])}")
