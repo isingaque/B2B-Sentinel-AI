@@ -17,6 +17,12 @@ jobs:
       - name: Evaluate published Prometheus rules (diagnostic, not an acceptance gate)
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py
+      - name: Evaluate offline v2 on development corpus
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2
+      - name: Evaluate offline v2 on untouched-exporter holdout
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --dataset tests/fixtures/heldout_prometheus_rules.csv
       - name: Evaluate seed runbook retrieval (hash mode)
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_retrieval.py --backend hash
