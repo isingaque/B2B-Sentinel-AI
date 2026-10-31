@@ -1,0 +1,52 @@
+name: One-command Docker Compose smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  docker-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Compose availability
+        run: docker compose version
+
+      - name: Verify default configuration needs no .env
+        run: |
+          test ! -f .env
+          docker compose config --quiet
+          test "$(docker compose config --format json | python3 -c 'import sys,json; c=json.load(sys.stdin); print(c["services"]["api"]["environment"]["CLASSIFIER_ENGINE"])')" = "context_guarded"
+
+      - name: Start everything using the README command
+        run: docker compose up --build -d
+
+      - name: Wait for API and frontend readiness
+        run: |
+          for attempt in $(seq 1 90); do
+            if curl -fsS --max-time 3 http://127.0.0.1:8080/health/ready >/dev/null &&
+               curl -fsS --max-time 3 http://127.0.0.1:8080/ >/dev/null &&
+               curl -fsS --max-time 3 http://127.0.0.1:9090/-/ready >/dev/null; then
+              echo "One-command startup verified."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Sentinel AI failed to become ready"
+          exit 1
+
+      - name: Verify production classifier and trained local models
+        run: |
+          docker compose exec -T api python -c 'from app.config import settings; from app.ml_v16 import load_model; from app.source_guard import guarded_classification; assert settings.classifier_engine == "context_guarded"; result=guarded_classification({"alert_name":"HighCPUUsage","title":"High CPU","description":"CPU usage elevated","labels":{"severity":"critical","category":"server"}}); assert result["severity"]=="critical"; assert result["category"]=="server"; assert result["model_prediction"]["severity"] in ("warning","critical","info"); print("Guarded ML model operational")'
+          docker compose ps
+
+      - name: Diagnostic logs on failure
+        if: failure()
+        run: docker compose logs --tail=100
+
+      - name: Stop demo containers without deleting data volumes
+        if: always()
+        run: docker compose down
