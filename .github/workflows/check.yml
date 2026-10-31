@@ -59,6 +59,15 @@ jobs:
       - name: Evaluate seed runbook retrieval (hash mode)
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_retrieval.py --backend hash
+      - name: Upload reproducible AI evaluation matrices
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-ai-ml-evaluation
+          path: |
+            reports/groupcv_v15.json
+            reports/annotation_v16_holdout.json
+          if-no-files-found: error
+          retention-days: 30
   frontend:
     runs-on: ubuntu-latest
     steps:
