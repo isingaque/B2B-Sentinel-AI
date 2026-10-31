@@ -20,6 +20,7 @@ from app.ai import embed
 from app.schemas import LoginRequest, RunbookCreateRequest, RunbookUpdateRequest, ChecklistUpdateRequest, CloseIncidentRequest
 from app.serialization import incident_json, detail_json, recommendation_json, checklist_json, runbook_json, audit_json
 from app.services import add_audit
+from app.comparison import compare_incident_classifiers
 from app.tasks import sync_prometheus, analyze_incident
 
 app = FastAPI(title="Duty AI — B2B Incident Copilot", version="1.1.0", description="Assists operators; NEVER executes remediation commands.")
@@ -137,6 +138,17 @@ def incidents(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=10
 @app.get("/api/v1/incidents/{incident_id}", tags=["Incidents"])
 def incident_detail(incident_id: UUID, db: Session = Depends(get_db), _=Depends(current_user)):
     return detail_json(load_incident(db, incident_id))
+
+@app.get("/api/v1/incidents/{incident_id}/analysis/compare", tags=["Incidents"])
+def comparison(incident_id: UUID, db: Session = Depends(get_db),
+               _=Depends(current_user)):
+    """Non-mutating ML research view; does not replace the applied analysis."""
+    i = load_incident(db, incident_id)
+    return compare_incident_classifiers({
+        "alert_name": i.alert_name, "title": i.title,
+        "description": i.description, "labels": i.labels,
+    })
+
 
 @app.get("/api/v1/incidents/{incident_id}/timeline", tags=["Incidents"])
 def timeline(incident_id: UUID, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
