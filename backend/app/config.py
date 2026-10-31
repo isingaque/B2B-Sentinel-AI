@@ -10,5 +10,6 @@ class Settings(BaseSettings):
     jwt_secret: str = "replace_with_at_least_32_random_characters_before_public_deploy"
     demo_password: str = "DemoPass123!"
     embedding_backend: str = "hash"
+    classifier_engine: str = "context_guarded"
 
 settings = Settings()

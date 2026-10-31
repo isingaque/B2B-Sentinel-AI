@@ -6,6 +6,12 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.ai import classify, embed, pick_runbooks
+from app.triage_v2 import classify_v2
+from app.ml_v14 import classify_ml, classify_learned
+from app.ml_v16 import classify_context
+from app.source_guard import guarded_classification
+from app.priority_policy import assign_priority
+from app.config import settings
 from app.models import Incident, MonitoringSource, Analysis, Recommendation, AuditEvent, Runbook, utcnow
 
 log = logging.getLogger(__name__)
@@ -83,7 +89,19 @@ def perform_analysis(db: Session, incident_id: str, analysis_id: str):
     try:
         alert = dict(labels=incident.labels, alert_name=incident.alert_name,
                      title=incident.title, description=incident.description)
-        result = classify(alert)
+        result = (guarded_classification(alert) if settings.classifier_engine == "context_guarded" else
+                  classify_context(alert) if settings.classifier_engine == "context" else
+                  classify_learned(alert) if settings.classifier_engine == "learned" else
+                  classify_ml(alert) if settings.classifier_engine == "ml" else
+                  classify_v2(alert) if settings.classifier_engine == "v2" else classify(alert))
+        # Priority follows the business policy, not just a severity lookup.
+        # Explicit environment labels are interpreted independently from AI.
+        priority, priority_review, priority_reason = assign_priority(
+            result["severity"], incident.labels
+        )
+        result["priority"] = priority
+        result["review_required"] = result["review_required"] or priority_review
+        result["explanation"] = result["explanation"] + " " + priority_reason + "."
         runbooks = db.scalars(select(Runbook).where(Runbook.is_active.is_(True))).all()
         candidates = pick_runbooks(alert, result, runbooks)
         # Remove old suggestions only when no plan has been adopted; chosen plan is immutable.

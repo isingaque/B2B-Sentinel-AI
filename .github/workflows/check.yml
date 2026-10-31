@@ -11,9 +11,63 @@ jobs:
         with: {python-version: '3.12'}
       - name: Install dependencies
         run: pip install -r backend/requirements-dev.txt
+      - name: Train local supervised ML model (train+validation only)
+        working-directory: backend
+        run: PYTHONPATH=. python -m app.ml_v14 --train
+      - name: Evaluate trained model on validation exporters
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_ml_v14.py
+      - name: Evaluate ML once on untouched exporter-family holdout (diagnostic)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_ml_v14.py --final
+      - name: Cross-exporter grouped CV (exploratory quality report)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_groupcv_v15.py --json-out ../reports/groupcv_v15.json
+      - name: Train v16 from frozen annotation train and validation only
+        working-directory: backend
+        run: PYTHONPATH=. python -m app.ml_v16 --train
+      - name: Evaluate v16 on source-disjoint annotation validation
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_context_v16.py
+      - name: Evaluate v16 once on source-disjoint annotated holdout
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_context_v16.py --final --json-out ../reports/annotation_v16_holdout.json
       - name: Test local AI
         working-directory: backend
         run: pytest -q && PYTHONPATH=. python ../scripts/evaluate_ai.py
+      - name: Evaluate published Prometheus rules (diagnostic, not an acceptance gate)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py
+      - name: Evaluate legacy on untouched-exporter holdout
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine legacy --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate offline v2 on original synthetic cases (diagnostic)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_ai.py --engine v2 --no-gate
+      - name: Evaluate offline v2 on development corpus
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2
+      - name: Evaluate offline v2 on untouched-exporter holdout
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate source-assisted classification on other exporters
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --mode source --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate full Prometheus event metadata (severity passthrough)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_public_rules.py --engine v2 --mode operational --dataset tests/fixtures/heldout_prometheus_rules.csv
+      - name: Evaluate seed runbook retrieval (hash mode)
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_retrieval.py --backend hash
+      - name: Upload reproducible AI evaluation matrices
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-ai-ml-evaluation
+          path: |
+            reports/groupcv_v15.json
+            reports/annotation_v16_holdout.json
+          if-no-files-found: error
+          retention-days: 30
   frontend:
     runs-on: ubuntu-latest
     steps:
