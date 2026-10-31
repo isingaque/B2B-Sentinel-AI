@@ -23,6 +23,15 @@ jobs:
       - name: Cross-exporter grouped CV (exploratory quality report)
         working-directory: backend
         run: PYTHONPATH=. python ../scripts/evaluate_groupcv_v15.py --json-out ../reports/groupcv_v15.json
+      - name: Train v16 from frozen annotation train and validation only
+        working-directory: backend
+        run: PYTHONPATH=. python -m app.ml_v16 --train
+      - name: Evaluate v16 on source-disjoint annotation validation
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_context_v16.py
+      - name: Evaluate v16 once on source-disjoint annotated holdout
+        working-directory: backend
+        run: PYTHONPATH=. python ../scripts/evaluate_context_v16.py --final --json-out ../reports/annotation_v16_holdout.json
       - name: Test local AI
         working-directory: backend
         run: pytest -q && PYTHONPATH=. python ../scripts/evaluate_ai.py
