@@ -45,7 +45,7 @@ function App(){
    {page==='runbooks'&&<Runbooks admin={admin} action={runAction}/>}
    {page==='simulator'&&<Simulator admin={admin} sources={sources.data?.items||[]} action={runAction} onPage={()=>{setPage('incidents');setSelected(null)}}/>}
    {page==='analytics'&&<Analytics summary={summary.data}/>}
-   <footer>Sentinel AI · Incident Copilot v1.8 (экспериментальная) <span>Консультативная система · Human-in-the-loop</span></footer>
+   <footer>Sentinel AI · Incident Copilot v1.8 (MVP) <span>Консультативная система · Human-in-the-loop</span></footer>
    </div>
   </main>
   {notice&&<div role="status" className="toast"><AlertCircle size={18}/>{notice}<button onClick={()=>setNotice('')}><X size={17}/></button></div>}
