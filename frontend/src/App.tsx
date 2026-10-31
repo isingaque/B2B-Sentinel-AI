@@ -45,7 +45,7 @@ function App(){
    {page==='runbooks'&&<Runbooks admin={admin} action={runAction}/>}
    {page==='simulator'&&<Simulator admin={admin} sources={sources.data?.items||[]} action={runAction} onPage={()=>{setPage('incidents');setSelected(null)}}/>}
    {page==='analytics'&&<Analytics summary={summary.data}/>}
-   <footer>Sentinel AI · Incident Copilot v1.7 (экспериментальная) <span>Консультативная система · Human-in-the-loop</span></footer>
+   <footer>Sentinel AI · Incident Copilot v1.8 (экспериментальная) <span>Консультативная система · Human-in-the-loop</span></footer>
    </div>
   </main>
   {notice&&<div role="status" className="toast"><AlertCircle size={18}/>{notice}<button onClick={()=>setNotice('')}><X size={17}/></button></div>}
@@ -109,6 +109,19 @@ function ModelComparison({comparison}:{comparison:ClassificationComparison}){
     <p className="comparison-explanation">{prediction.explanation}</p>
    </div>
   })}</div>
+  <div className="source-guard-panel">
+   <div className="source-guard-title"><ShieldCheck size={18}/><strong>Что применять в работе: сверка с Prometheus</strong></div>
+   <div className="source-guard-grid">
+    <div><span>Критичность из Prometheus</span><b>{comparison.source_guard_preview.source_labels.severity?<Pill text={comparison.source_guard_preview.source_labels.severity} kind={comparison.source_guard_preview.source_labels.severity}/>:<span>Метка отсутствует</span>}</b></div>
+    <div><span>Прогноз обученной ML</span><b><Pill text={comparison.source_guard_preview.model_prediction.severity} kind={comparison.source_guard_preview.model_prediction.severity}/></b></div>
+    <div><span>Рабочее решение</span><b><Pill text={comparison.source_guard_preview.severity} kind={comparison.source_guard_preview.severity}/> · {comparison.source_guard_preview.priority}</b></div>
+   </div>
+   {comparison.source_guard_preview.differences_from_source.severity&&<div className="source-guard-warning"><AlertTriangle size={16}/> ML и настроенная критичность Prometheus расходятся. Для реагирования используем метку источника и обязательно проверяем фактические метрики.</div>}
+   {comparison.source_guard_preview.differences_from_source.category&&<div className="source-guard-warning"><AlertTriangle size={16}/> Категория ML отличается от категории, заданной мониторингом. Требуется проверка.</div>}
+   <p className="source-guard-explanation">{comparison.source_guard_preview.explanation}</p>
+   {comparison.demo_notice&&<p className="source-guard-demo"><AlertCircle size={15}/>{comparison.demo_notice}</p>}
+   <p className="source-guard-method">Это предварительный расчёт без изменения текущего инцидента. Для применения в новых анализах включите CLASSIFIER_ENGINE=context_guarded. Метки Prometheus — данные источника, а не точность предсказания ML.</p>
+  </div>
   <p className="comparison-disclaimer">Обе модели получили одинаковые название, summary и description. Готовые метки category и severity от Prometheus исключены. Приоритет рассчитывается по общей политике с учётом окружения. Совпадение прогнозов не означает их правильность и не является измерением точности.</p>
  </div>
 }
