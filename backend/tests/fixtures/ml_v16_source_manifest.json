@@ -1,0 +1,509 @@
+{
+  "origin": "samber/awesome-prometheus-alerts",
+  "source_ref": "master",
+  "provenance": "source_sha per published rule definition",
+  "splits": {
+    "train": 46,
+    "validation": 10,
+    "holdout": 15
+  },
+  "sources": [
+    {
+      "source_path": "dist/rules/apache/lusitaniae-apache-exporter.yml",
+      "source_sha": "00c94919549fc35e19c09caf9036699ded36e541",
+      "category": "application",
+      "split": "train",
+      "rule_count": 4
+    },
+    {
+      "source_path": "dist/rules/apc-ups/apcupsd_exporter.yml",
+      "source_sha": "820a0063f71533159d19e640cca32d26be68bc61",
+      "category": "server",
+      "split": "holdout",
+      "rule_count": 6
+    },
+    {
+      "source_path": "dist/rules/argocd/embedded-exporter.yml",
+      "source_sha": "9029f777b07eee2d2d48c351d0159f7ca40c11f9",
+      "category": "application",
+      "split": "train",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/blackbox/blackbox-exporter.yml",
+      "source_sha": "2aea528ef8a8a4e48f0e3ced1f4ea4ba9b6b546e",
+      "category": "network",
+      "split": "train",
+      "rule_count": 10
+    },
+    {
+      "source_path": "dist/rules/caddy/embedded-exporter.yml",
+      "source_sha": "f6ccf919719f354f714e0b0131ecec43e5e2cd50",
+      "category": "application",
+      "split": "train",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/cassandra/criteo-cassandra-exporter.yml",
+      "source_sha": "def3fff6d857c72bbad1a725a13b8169d5415009",
+      "category": "database",
+      "split": "train",
+      "rule_count": 18
+    },
+    {
+      "source_path": "dist/rules/cassandra/instaclustr-cassandra-exporter.yml",
+      "source_sha": "e0e6f6f892a5155a210555ab7d44c331920fc7f8",
+      "category": "database",
+      "split": "train",
+      "rule_count": 12
+    },
+    {
+      "source_path": "dist/rules/cilium/embedded-exporter.yml",
+      "source_sha": "1ebec2ef7a2e3f48500e3f90df67e9b9f7bd1b7d",
+      "category": "network",
+      "split": "train",
+      "rule_count": 31
+    },
+    {
+      "source_path": "dist/rules/clickhouse/embedded-exporter.yml",
+      "source_sha": "3eb86892150ab8176049f8b7ba34a901ef790eb0",
+      "category": "database",
+      "split": "train",
+      "rule_count": 23
+    },
+    {
+      "source_path": "dist/rules/cloudflare/lablabs-cloudflare-exporter.yml",
+      "source_sha": "c0406a77564ec22631209baa540c299a714d8f91",
+      "category": "network",
+      "split": "validation",
+      "rule_count": 5
+    },
+    {
+      "source_path": "dist/rules/consul/consul-exporter.yml",
+      "source_sha": "46579d1f369a14cc00f8173044a1ff36c90d831a",
+      "category": "network",
+      "split": "train",
+      "rule_count": 5
+    },
+    {
+      "source_path": "dist/rules/coredns/embedded-exporter.yml",
+      "source_sha": "d5615055157299a10d52fc5ff2290675dac43de8",
+      "category": "network",
+      "split": "train",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/couchdb/gesellix-couchdb-prometheus-exporter.yml",
+      "source_sha": "204a871cacca979f462766390778f3768fea4e32",
+      "category": "database",
+      "split": "holdout",
+      "rule_count": 24
+    },
+    {
+      "source_path": "dist/rules/docker-containers/google-cadvisor.yml",
+      "source_sha": "fc8b13cbd7b65a0206d951ed03709b23b8cfc707",
+      "category": "server",
+      "split": "train",
+      "rule_count": 10
+    },
+    {
+      "source_path": "dist/rules/ebpf/ebpf-exporter.yml",
+      "source_sha": "bd2873e4cb8ea5f50f4c8bcc1b21ae70b28e2c62",
+      "category": "server",
+      "split": "train",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/elasticsearch/prometheus-community-elasticsearch-exporter.yml",
+      "source_sha": "d549f3a7c55303d06dca36122e612fdc5025a797",
+      "category": "database",
+      "split": "train",
+      "rule_count": 22
+    },
+    {
+      "source_path": "dist/rules/freeswitch/znerol-freeswitch-exporter.yml",
+      "source_sha": "ac09c676065e987e64fb5b5c4133f11be654a1fc",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/golang/golang-exporter.yml",
+      "source_sha": "5eb44feadcaef4654408e92aa616dc54556778f9",
+      "category": "application",
+      "split": "train",
+      "rule_count": 10
+    },
+    {
+      "source_path": "dist/rules/grafana-mimir/embedded-exporter.yml",
+      "source_sha": "c47fc115e6eb72c3ff9dd416dc5fdcdf44f48d74",
+      "category": "application",
+      "split": "train",
+      "rule_count": 55
+    },
+    {
+      "source_path": "dist/rules/grafana-tempo/embedded-exporter.yml",
+      "source_sha": "e77f0539f1187f9929d7c19ea2a885ec890b1149",
+      "category": "application",
+      "split": "validation",
+      "rule_count": 28
+    },
+    {
+      "source_path": "dist/rules/graph-node/embedded-exporter.yml",
+      "source_sha": "e79e5084b20737b1e174a6c3cdb9d9ed46f08488",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 8
+    },
+    {
+      "source_path": "dist/rules/haproxy/haproxy-exporter-v1.yml",
+      "source_sha": "0d155fd4fe278e069d623a1a04a158155d9a580d",
+      "category": "application",
+      "split": "train",
+      "rule_count": 16
+    },
+    {
+      "source_path": "dist/rules/hashicorp-vault/embedded-exporter.yml",
+      "source_sha": "14084265cb7332b82b20a049b2cdfc3e94692824",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 7
+    },
+    {
+      "source_path": "dist/rules/host-and-hardware/node-exporter.yml",
+      "source_sha": "11776463706c376f3d942578b42f89690567102c",
+      "category": "server",
+      "split": "train",
+      "rule_count": 41
+    },
+    {
+      "source_path": "dist/rules/ipmi/ipmi-exporter.yml",
+      "source_sha": "ae052d6cb0d1bb8ea13d6ba46cf0fb695487af19",
+      "category": "server",
+      "split": "train",
+      "rule_count": 17
+    },
+    {
+      "source_path": "dist/rules/istio/embedded-exporter.yml",
+      "source_sha": "097b292be11dcbcd270c43b7b5c8dc83835f9d79",
+      "category": "application",
+      "split": "train",
+      "rule_count": 11
+    },
+    {
+      "source_path": "dist/rules/jenkins/metric-plugin.yml",
+      "source_sha": "78e2171a16cecefae0f12e6379b50ba173f4c884",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 8
+    },
+    {
+      "source_path": "dist/rules/juniper/czerwonk-junos-exporter.yml",
+      "source_sha": "b70635bb15a455df7be50d66ff9db80350fcc91c",
+      "category": "network",
+      "split": "train",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/jvm/jvm-exporter.yml",
+      "source_sha": "f26aa2a5c665fc2bfffd64f12ae5f46d0b47b34c",
+      "category": "application",
+      "split": "train",
+      "rule_count": 12
+    },
+    {
+      "source_path": "dist/rules/kafka/danielqsj-kafka-exporter.yml",
+      "source_sha": "2e66dae8e3d723463f1ae6467a90ecbc20a08867",
+      "category": "application",
+      "split": "train",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/kafka/linkedin-kafka-exporter.yml",
+      "source_sha": "01f6a837459927c7acd637a801b72251ee44a0f1",
+      "category": "application",
+      "split": "train",
+      "rule_count": 2
+    },
+    {
+      "source_path": "dist/rules/keycloak/aerogear-keycloak-metrics-spi.yml",
+      "source_sha": "13a19f26597b33dcaf867fe2175c006ed8723f0a",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 6
+    },
+    {
+      "source_path": "dist/rules/kubernetes/kubestate-exporter.yml",
+      "source_sha": "b00fb122702cc88645f92ea9492b54f3661c0cec",
+      "category": "application",
+      "split": "train",
+      "rule_count": 46
+    },
+    {
+      "source_path": "dist/rules/linkerd/embedded-exporter.yml",
+      "source_sha": "30d44565810b04d353560a196a15df5638fc255b",
+      "category": "network",
+      "split": "train",
+      "rule_count": 1
+    },
+    {
+      "source_path": "dist/rules/meilisearch/embedded-exporter.yml",
+      "source_sha": "5b05c29cee2423decb92512f6ed4ecf87643ff22",
+      "category": "database",
+      "split": "holdout",
+      "rule_count": 2
+    },
+    {
+      "source_path": "dist/rules/memcached/memcached-exporter.yml",
+      "source_sha": "2168032640afd54116ecd23bef7a13f6ead7d809",
+      "category": "database",
+      "split": "holdout",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/minio/embedded-exporter.yml",
+      "source_sha": "a287af7c885e93b33872321127f0e6d9860d28f6",
+      "category": "application",
+      "split": "train",
+      "rule_count": 5
+    },
+    {
+      "source_path": "dist/rules/mongodb/dcu-mongodb-exporter.yml",
+      "source_sha": "021f0e7426c0827cdb04f68b54135937716a903d",
+      "category": "database",
+      "split": "train",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/mongodb/percona-mongodb-exporter.yml",
+      "source_sha": "36b4e046dc15eccd4166aa8d70a43e3e76450652",
+      "category": "database",
+      "split": "train",
+      "rule_count": 12
+    },
+    {
+      "source_path": "dist/rules/mongodb/stefanprodan-mgob-exporter.yml",
+      "source_sha": "885a5bb49297302e61288d0a01c27a842408ba37",
+      "category": "database",
+      "split": "train",
+      "rule_count": 1
+    },
+    {
+      "source_path": "dist/rules/mysql/mysqld-exporter.yml",
+      "source_sha": "427358726d58c1baece8f9aa8ac52a10f1b47cd8",
+      "category": "database",
+      "split": "train",
+      "rule_count": 18
+    },
+    {
+      "source_path": "dist/rules/nats/nats-exporter.yml",
+      "source_sha": "efe51da9c7c84db133fe944becaf8e82c3b5f92f",
+      "category": "application",
+      "split": "validation",
+      "rule_count": 13
+    },
+    {
+      "source_path": "dist/rules/netdata/embedded-exporter.yml",
+      "source_sha": "38eaacb74dde049540485d2d400377073e261528",
+      "category": "server",
+      "split": "train",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/nginx/knyar-nginx-exporter.yml",
+      "source_sha": "4c68dff18e007deb4c3544a64a59fc50ee987b3c",
+      "category": "application",
+      "split": "train",
+      "rule_count": 4
+    },
+    {
+      "source_path": "dist/rules/opensearch/opensearch-project-opensearch-prometheus-exporter.yml",
+      "source_sha": "08edf0dde6080ebd0861616406707bb32b4e9afb",
+      "category": "database",
+      "split": "holdout",
+      "rule_count": 12
+    },
+    {
+      "source_path": "dist/rules/oracle-database/iamseth-oracledb-exporter.yml",
+      "source_sha": "c088d585260796325e9bab046707c0d97a7916b9",
+      "category": "database",
+      "split": "holdout",
+      "rule_count": 8
+    },
+    {
+      "source_path": "dist/rules/patroni/embedded-exporter-patroni.yml",
+      "source_sha": "8055230a1c02ca49e27e0a78b8e67c04cd7b1cb4",
+      "category": "database",
+      "split": "train",
+      "rule_count": 1
+    },
+    {
+      "source_path": "dist/rules/pgbouncer/spreaker-pgbouncer-exporter.yml",
+      "source_sha": "7eb8db64f555714e9498332db912e9ea71a2515d",
+      "category": "database",
+      "split": "validation",
+      "rule_count": 6
+    },
+    {
+      "source_path": "dist/rules/php-fpm/bakins-fpm-exporter.yml",
+      "source_sha": "d3266f1626abb87c9815effe2452dacd1879e63c",
+      "category": "application",
+      "split": "train",
+      "rule_count": 4
+    },
+    {
+      "source_path": "dist/rules/postgresql/postgres-exporter.yml",
+      "source_sha": "929f27dbfdc8c6255769d7234683472f2ff89acd",
+      "category": "database",
+      "split": "train",
+      "rule_count": 25
+    },
+    {
+      "source_path": "dist/rules/process-exporter/process-exporter.yml",
+      "source_sha": "af534455a25bb78be8c01b807fb6a9c5e72fb5f7",
+      "category": "server",
+      "split": "train",
+      "rule_count": 10
+    },
+    {
+      "source_path": "dist/rules/proxmox-ve/prometheus-pve-exporter.yml",
+      "source_sha": "ee05e7de75399f0dd8859fc562a30f4dcfc9f024",
+      "category": "server",
+      "split": "validation",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/python/python-exporter.yml",
+      "source_sha": "e4fc9dc1823b5c41dc2b353878614edb05e9c5a6",
+      "category": "application",
+      "split": "train",
+      "rule_count": 5
+    },
+    {
+      "source_path": "dist/rules/rabbitmq/kbudde-rabbitmq-exporter.yml",
+      "source_sha": "229fb2779f0768c97356244aa5cd0db2de7e14b6",
+      "category": "application",
+      "split": "train",
+      "rule_count": 11
+    },
+    {
+      "source_path": "dist/rules/redis/oliver006-redis-exporter.yml",
+      "source_sha": "f35034c251825599fdba89d4346fd1ba827270ff",
+      "category": "database",
+      "split": "train",
+      "rule_count": 16
+    },
+    {
+      "source_path": "dist/rules/s.m.a.r.t-device-monitoring/smartctl-exporter.yml",
+      "source_sha": "f631f7ed6d81391afd5d78128c8608f453c17b6c",
+      "category": "server",
+      "split": "train",
+      "rule_count": 9
+    },
+    {
+      "source_path": "dist/rules/sip-exporter/aibudaevv-sip-exporter.yml",
+      "source_sha": "e4ef356b249dfa34bf9309eb1b676dfba4bb525d",
+      "category": "network",
+      "split": "train",
+      "rule_count": 6
+    },
+    {
+      "source_path": "dist/rules/snmp/snmp-exporter.yml",
+      "source_sha": "1079f20d51c9467bf548b9db43469a9913772b9a",
+      "category": "network",
+      "split": "train",
+      "rule_count": 7
+    },
+    {
+      "source_path": "dist/rules/solr/embedded-exporter.yml",
+      "source_sha": "7f262af719a22f21cfc0c838662ce6573d1f4afe",
+      "category": "database",
+      "split": "train",
+      "rule_count": 10
+    },
+    {
+      "source_path": "dist/rules/speedtest/nlamirault-speedtest-exporter.yml",
+      "source_sha": "35ea2e8a0adb1fcd11b2b47caf818afa6204f70c",
+      "category": "network",
+      "split": "holdout",
+      "rule_count": 2
+    },
+    {
+      "source_path": "dist/rules/spinnaker/embedded-exporter.yml",
+      "source_sha": "b0c06a2bfa4b4780c47a429e6213bae6009ff9fa",
+      "category": "application",
+      "split": "holdout",
+      "rule_count": 12
+    },
+    {
+      "source_path": "dist/rules/sql-server/ozarklake-mssql-exporter.yml",
+      "source_sha": "51ffd9414d8f1f16f583da2e020c0e00983c08f1",
+      "category": "database",
+      "split": "validation",
+      "rule_count": 2
+    },
+    {
+      "source_path": "dist/rules/ssl/tls/ribbybibby-ssl-exporter.yml",
+      "source_sha": "9e983d6899905c6e165d98e83d3cd4f32231af79",
+      "category": "network",
+      "split": "train",
+      "rule_count": 4
+    },
+    {
+      "source_path": "dist/rules/systemd/systemd-exporter.yml",
+      "source_sha": "c53907c85a133dc79ba0d0ca57969dbfaed8d248",
+      "category": "server",
+      "split": "train",
+      "rule_count": 7
+    },
+    {
+      "source_path": "dist/rules/traefik/embedded-exporter-v1.yml",
+      "source_sha": "83ce9b9c5b3a25b90667b8f2d7fa3c7f292c75c6",
+      "category": "application",
+      "split": "validation",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/vmware/pryorda-vmware-exporter.yml",
+      "source_sha": "b3b79d517ca6758ca49e30eff136f49eb790f381",
+      "category": "server",
+      "split": "validation",
+      "rule_count": 4
+    },
+    {
+      "source_path": "dist/rules/windows-server/windows-exporter.yml",
+      "source_sha": "b2af2bc5cd6394641ac156f48c6af53faa10f113",
+      "category": "server",
+      "split": "holdout",
+      "rule_count": 8
+    },
+    {
+      "source_path": "dist/rules/wireguard/mindflavor-prometheus-wireguard-exporter.yml",
+      "source_sha": "d74bee13a92d81a33a1cd1bff4d78f740fa078c7",
+      "category": "network",
+      "split": "holdout",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/zfs/node-exporter.yml",
+      "source_sha": "546abf1d4731511a2085bc1fb6bb9625c2c23786",
+      "category": "server",
+      "split": "validation",
+      "rule_count": 1
+    },
+    {
+      "source_path": "dist/rules/zfs/zfs_exporter.yml",
+      "source_sha": "5fd8c2e84e7cf6929d2a0b2951d97c5d0826fc1d",
+      "category": "server",
+      "split": "validation",
+      "rule_count": 3
+    },
+    {
+      "source_path": "dist/rules/zookeeper/dabealu-zookeeper-exporter.yml",
+      "source_sha": "e0873a26abe6aaa9b7bdb19f7218a92386839b70",
+      "category": "database",
+      "split": "train",
+      "rule_count": 4
+    }
+  ]
+}
