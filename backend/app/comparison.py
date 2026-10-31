@@ -6,6 +6,7 @@ metadata and therefore is not a separately learned prediction.
 """
 from app.ai import classify
 from app.ml_v16 import classify_context
+from app.source_guard import guarded_classification
 from app.priority_policy import assign_priority
 
 
@@ -37,6 +38,12 @@ def compare_incident_classifiers(alert: dict, baseline=None, learned=None) -> di
 
     v1 = view(old)
     ml = view(new)
+    guarded = guarded_classification(alert, ml_prediction=new)
+    operational_priority, _, priority_reason = assign_priority(
+        guarded["severity"], alert.get("labels") or {}
+    )
+    guarded["priority"] = operational_priority
+    guarded["priority_explanation"] = priority_reason
     differences = {
         key: v1[key] != ml[key] for key in ("category", "severity", "priority")
     }
@@ -49,4 +56,11 @@ def compare_incident_classifiers(alert: dict, baseline=None, learned=None) -> di
         "target_source_labels_excluded": True,
         "priority_policy_uses_environment": True,
         "is_accuracy_measurement": False,
+        "source_guard_preview": guarded,
+        "demo_notice": (
+            "Это демонстрационный сигнал: переключатель симулятора активирует "
+            "правило Prometheus, но не измеряет реальную загрузку CPU."
+            if str((alert.get("labels") or {}).get("scenario") or "").lower() == "cpu_high"
+            else None
+        ),
     }
