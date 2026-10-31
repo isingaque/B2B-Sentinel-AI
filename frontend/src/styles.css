@@ -38,3 +38,20 @@
 .score.score-low{color:#a66c16;background:#fff2db}
 .rec-card .weak-recommendation{display:flex;align-items:center;gap:7px;border-radius:6px;padding:9px;background:#fff8e9;color:#a86c19;font-size:10px;margin-top:9px}
 @media(max-width:680px){.comparison-grid{grid-template-columns:1fr}.comparison-model{padding:12px}}
+
+
+/* Operational source labels vs independent ML: do not conflate provenance with accuracy. */
+.source-guard-panel{margin-top:14px;border:1px solid #b9d1fa;background:#f6f9ff;padding:15px;border-radius:9px}
+.source-guard-title{display:flex;align-items:center;gap:8px;color:#274d8b;font-size:12px;margin-bottom:13px}
+.source-guard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.source-guard-grid>div{background:#fff;border:1px solid #e5ecf8;border-radius:7px;padding:10px;min-width:0}
+.source-guard-grid span{display:block;color:#7587a3;font-size:10px;margin-bottom:7px}
+.source-guard-grid b{font-size:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:#253b59}
+.source-guard-grid b .pill{margin:0}
+.source-guard-warning,.source-guard-demo{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.6;padding:10px;border-radius:7px;margin-top:11px}
+.source-guard-warning{background:#fff1da;color:#93620e}
+.source-guard-demo{background:#eef2fa;color:#5f708b}
+.source-guard-warning svg,.source-guard-demo svg{flex-shrink:0;margin-top:1px}
+.source-guard-explanation{margin-top:12px;font-size:11px;color:#566d8d;line-height:1.65}
+.source-guard-method{font-size:10px;color:#788ba4;line-height:1.6;margin-top:9px}
+@media(max-width:720px){.source-guard-grid{grid-template-columns:1fr}}
