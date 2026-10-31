@@ -3,12 +3,14 @@ name: One-command Docker Compose smoke test
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   docker-compose:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +43,7 @@ jobs:
       - name: Verify production classifier and trained local models
         run: |
           docker compose exec -T api python -c 'from app.config import settings; from app.ml_v16 import load_model; from app.source_guard import guarded_classification; assert settings.classifier_engine == "context_guarded"; result=guarded_classification({"alert_name":"HighCPUUsage","title":"High CPU","description":"CPU usage elevated","labels":{"severity":"critical","category":"server"}}); assert result["severity"]=="critical"; assert result["category"]=="server"; assert result["model_prediction"]["severity"] in ("warning","critical","info"); print("Guarded ML model operational")'
+          docker compose exec -T api python -c 'from app.config import settings; from app.ai import embed, pick_runbooks; from app.models import Runbook; from app.database import SessionLocal; from sqlalchemy import select, text; assert settings.embedding_backend=="e5"; vec=embed("HighCPUUsage CPU processor load", "query"); assert len(vec)==384 and 0.99<sum(x*x for x in vec)<1.01; db=SessionLocal(); assert db.execute(text("SELECT backend FROM runbook_embedding_state WHERE id=1")).scalar_one()=="e5"; books=db.scalars(select(Runbook)).all(); assert len(books)>=5; recs=pick_runbooks({"alert_name":"HighCPUUsage","title":"CPU high","description":"CPU processor load exceeded threshold","labels":{}},{"category":"server","severity":"critical"},books); assert recs and any("процессора" in r.title.lower() for r,_,_ in recs); print("E5 neural runbook retrieval operational")'
           docker compose ps
 
       - name: Diagnostic logs on failure

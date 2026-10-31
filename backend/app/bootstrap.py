@@ -24,6 +24,12 @@ def bootstrap():
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     Base.metadata.create_all(engine)
+    # Track vector encoding to avoid comparing incompatible E5 / hash vectors.
+    with engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS runbook_embedding_state "
+            "(id INTEGER PRIMARY KEY, backend TEXT NOT NULL)"
+        ))
     with SessionLocal() as db:
         if not db.scalar(select(MonitoringSource).where(MonitoringSource.name == "Prometheus")):
             db.add(MonitoringSource(name="Prometheus", kind="prometheus", health="never_connected", enabled=True))
@@ -37,6 +43,20 @@ def bootstrap():
                         severity=severity, embedding=embed(title + " " + condition))
             r.steps = [RunbookStep(position=i+1, instruction=s, is_risky=i == 2) for i,s in enumerate(steps)]
             db.add(r)
+        configured = db.execute(text(
+            "SELECT backend FROM runbook_embedding_state WHERE id = 1"
+        )).scalar_one_or_none()
+        if configured != settings.embedding_backend:
+            # Reindex once on first deploy or when the configured backend changes.
+            # Background workers start after the API bootstrap completes.
+            for book in db.scalars(select(Runbook)).all():
+                book.embedding = embed(
+                    f"{book.title} {book.condition_text}", kind="passage"
+                )
+            db.execute(text(
+                "INSERT INTO runbook_embedding_state (id, backend) VALUES (1, :backend) "
+                "ON CONFLICT (id) DO UPDATE SET backend = EXCLUDED.backend"
+            ), {"backend": settings.embedding_backend})
         db.commit()
 
 if __name__ == "__main__":
