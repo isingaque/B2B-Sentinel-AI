@@ -1,14 +1,34 @@
-# Experimental: neural embeddings (NOT enabled in standard v1.1)
+# Локальный семантический поиск регламентов E5
 
-The default v1.1 release stays with `EMBEDDING_BACKEND=hash` to preserve compatibility and fast startup. It has a *working opt-in path* for E5 neural vector search, but this optional mode has not been end-to-end Docker-tested in the authoring environment and may download several hundred MB of model libraries.
+В стандартном запуске **нейросетевая E5 включена по умолчанию**: `INSTALL_E5=1` и `EMBEDDING_BACKEND=e5`. Модель `intfloat/multilingual-e5-small` (384 измерения) подбирает инструкции по семантической близости описания события и текста регламента.
 
-**Before attempting:** back up PostgreSQL, ensure internet during first model download, enough RAM/disk, and avoid performing the migration during the live demo.
+**Это отдельная задача от классификации:** категория и критичность определяются локальной TF-IDF + Linear SVM, а E5 только помогает выбирать подходящие регламенты.
 
-1. Edit `.env`: set `INSTALL_E5=1` (leave `EMBEDDING_BACKEND=hash` for now).
-2. Rebuild images: `docker compose build api worker scheduler`.
-3. Stop background processing: `docker compose stop scheduler worker api`.
-4. Run one-off reindex with e5: `docker compose run --rm -e EMBEDDING_BACKEND=e5 api python /srv/reindex_embeddings.py`.
-5. After **DONE**, edit `.env`: `EMBEDDING_BACKEND=e5`.
-6. Run `docker compose up -d api worker scheduler`.
+## Запуск одной командой
 
-**Important:** E5 query embeddings must be compared with E5 passage embeddings. Mixing hash and E5 in the existing `runbooks.embedding` column gives meaningless results. Always reindex all runbooks when switching encoding algorithms. Both use dimension 384. If the model cannot be downloaded or memory is insufficient, do not switch modes. This is not an external LLM: it improves retrieval only; classification remains rule-based.
+```bash
+docker compose up --build -d
+```
+
+При первой сборке Docker скачивает CPU-only PyTorch, зависимости и E5 в образ. Понадобятся интернет, свободное место и достаточно памяти; GPU и ключи сторонних API не нужны. В обычном runtime модель использует локальные веса.
+
+Признаки запроса кодируются с префиксом `query:`, а инструкции — с `passage:`; ранжирование дополнительно учитывает ключевые слова, категорию и критичность. Приложение использует **только реальные регламенты из базы знаний**, не генерирует действия.
+
+## Обновление существующей базы
+
+В `app.bootstrap` записывается текущий режим в PostgreSQL `runbook_embedding_state`. Если `hash` изменился на `e5` (или наоборот), на старте **автоматически пересчитываются векторы всех существующих регламентов**. Инциденты, пользователи и принятые планы при этом не удаляются.
+
+## Резервный облегчённый режим
+
+На компьютерах с ограниченными ресурсами можно явно переключить **оба параметра** в `.env`:
+
+```dotenv
+INSTALL_E5=0
+EMBEDDING_BACKEND=hash
+```
+
+Далее заново выполнить `docker compose up --build -d`. Так нейросетевой поиск будет выключен, но **SVM-классификатор инцидентов продолжит работать**. При изменении режима вектора будут автоматически переиндексированы.
+
+## Ограничения и проверка
+
+E5 не гарантирует правильность всех рекомендаций — их должен проверять инженер. Проверка запуска с E5 встроена в Docker Smoke Test GitHub Actions; это **не доказательство 90% точности поиска** без независимой размеченной выборки «событие → эталонный регламент».
