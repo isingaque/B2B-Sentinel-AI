@@ -18,6 +18,11 @@ COPY backend/tests/fixtures/ml_v14_source_part0.csv /srv/ml_fixtures/
 COPY backend/tests/fixtures/ml_v14_source_part1.csv /srv/ml_fixtures/
 COPY backend/tests/fixtures/ml_v14_source_part2.csv /srv/ml_fixtures/
 RUN python -m app.ml_v14 --train --fixtures /srv/ml_fixtures
+# No holdout snapshot is copied into the runtime build context.
+RUN mkdir -p /srv/context_fixtures
+COPY backend/tests/fixtures/ml_v16_train.csv /srv/context_fixtures/
+COPY backend/tests/fixtures/ml_v16_validation.csv /srv/context_fixtures/
+RUN python -m app.ml_v16 --train --fixtures /srv/context_fixtures
 COPY contracts/openapi.yaml ./contracts/openapi.yaml
 COPY scripts/reindex_embeddings.py ./reindex_embeddings.py
 EXPOSE 8000
