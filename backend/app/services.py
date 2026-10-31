@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.ai import classify, embed, pick_runbooks
 from app.triage_v2 import classify_v2
 from app.ml_v14 import classify_ml, classify_learned
+from app.ml_v16 import classify_context
 from app.priority_policy import assign_priority
 from app.config import settings
 from app.models import Incident, MonitoringSource, Analysis, Recommendation, AuditEvent, Runbook, utcnow
@@ -87,7 +88,8 @@ def perform_analysis(db: Session, incident_id: str, analysis_id: str):
     try:
         alert = dict(labels=incident.labels, alert_name=incident.alert_name,
                      title=incident.title, description=incident.description)
-        result = (classify_learned(alert) if settings.classifier_engine == "learned" else
+        result = (classify_context(alert) if settings.classifier_engine == "context" else
+                  classify_learned(alert) if settings.classifier_engine == "learned" else
                   classify_ml(alert) if settings.classifier_engine == "ml" else
                   classify_v2(alert) if settings.classifier_engine == "v2" else classify(alert))
         # Priority follows the business policy, not just a severity lookup.
