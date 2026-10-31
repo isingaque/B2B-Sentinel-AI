@@ -14,6 +14,20 @@ export type ComparisonResult = {
   priority_explanation: string
   review_required: boolean
 }
+export type SourceGuardPreview = {
+  category: Category
+  severity: Severity
+  priority: string
+  explanation: string
+  model_version: string
+  review_required: boolean
+  source_labels: {category:Category|null;severity:Severity|null}
+  model_prediction: {category:Category;severity:Severity}
+  differences_from_source: {category:boolean;severity:boolean}
+  used_source_fields: string[]
+  priority_explanation: string
+  is_independent_ml_accuracy: false
+}
 export type ClassificationComparison = {
   baseline: ComparisonResult
   ml: ComparisonResult
@@ -23,6 +37,8 @@ export type ClassificationComparison = {
   target_source_labels_excluded: boolean
   priority_policy_uses_environment: boolean
   is_accuracy_measurement: boolean
+  source_guard_preview: SourceGuardPreview
+  demo_notice: string|null
 }
 export type Checklist = {id:string;incident_id:string;recommendation_id:string;position:number;instruction:string;status:'pending'|'done'|'skipped';note:string|null;updated_by:string|null;updated_at:string|null}
 export type IncidentDetail = Incident & {latest_analysis:Analysis|null;adopted_recommendation_id:string|null;checklist:Checklist[]}
