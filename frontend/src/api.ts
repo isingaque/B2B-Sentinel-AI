@@ -5,6 +5,25 @@ export type Monitor = 'pending'|'firing'|'resolved'
 export type User = {id:string;username:string;role:'admin'|'operator'}
 export type Incident = {id:string;source_id:string;source_name:string;alert_name:string;title:string;description:string;labels:Record<string,string>;annotations:Record<string,string>;monitor_state:Monitor;workflow_status:Workflow;severity:Severity|null;category:Category|null;priority:string|null;started_at:string;last_seen_at:string;resolved_at:string|null;acknowledged_at:string|null;acknowledged_by:string|null;closed_at:string|null;closed_by:string|null;resolution_note:string|null}
 export type Analysis = {id:string;status:'pending'|'running'|'completed'|'failed';severity:Severity|null;category:Category|null;priority:string|null;confidence:number|null;review_required:boolean;explanation:string|null;model_version:string;error_code:string|null;created_at:string;completed_at:string|null}
+export type ComparisonResult = {
+  category: Category
+  severity: Severity
+  priority: string
+  model_version: string
+  explanation: string
+  priority_explanation: string
+  review_required: boolean
+}
+export type ClassificationComparison = {
+  baseline: ComparisonResult
+  ml: ComparisonResult
+  differences: {category:boolean;severity:boolean;priority:boolean}
+  comparison_kind: 'label_blind_text_only'
+  used_inputs: string[]
+  target_source_labels_excluded: boolean
+  priority_policy_uses_environment: boolean
+  is_accuracy_measurement: boolean
+}
 export type Checklist = {id:string;incident_id:string;recommendation_id:string;position:number;instruction:string;status:'pending'|'done'|'skipped';note:string|null;updated_by:string|null;updated_at:string|null}
 export type IncidentDetail = Incident & {latest_analysis:Analysis|null;adopted_recommendation_id:string|null;checklist:Checklist[]}
 export type Recommendation = {id:string;incident_id:string;runbook_id:string;runbook_version:number;runbook_title:string;score:number;reason:string;steps_snapshot:{position:number;instruction:string;is_risky:boolean}[];is_adopted:boolean;created_at:string}
